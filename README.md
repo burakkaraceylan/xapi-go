@@ -8,7 +8,7 @@ XGO-Api is a client implemention for The Experience API (or xAPI) written in Gol
 The Experience API (or xAPI) is a new specification for learning technology that makes it possible to collect data about the wide range of experiences a person has (online and offline). This API captures data in a consistent format about a person or group’s activities from many technologies. Very different systems are able to securely communicate by capturing and sharing this stream of activities using xAPI’s simple vocabulary.
 
 ## Installation
-	go get github.com/bkaraceylan/xgo-api@latest
+	go get github.com/bkaraceylan/xapi-go@latest
 ## Module Usage
 	lrs, err := client.NewRemoteLRS(
 		"https://cloud.scorm.com/ScormEngineInterface/TCAPI/public/",
