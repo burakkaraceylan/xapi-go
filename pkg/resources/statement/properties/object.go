@@ -1,6 +1,6 @@
 package properties
 
-import "github.com/bkaraceylan/xapi-go/pkg/resources/statement/special"
+import "github.com/burakkaraceylan/xapi-go/pkg/resources/statement/special"
 
 type InteractionComponet struct {
 	ID          string               `json:"id" xapi:"required"`

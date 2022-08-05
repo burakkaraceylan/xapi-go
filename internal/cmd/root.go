@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/bkaraceylan/xapi-go/pkg/client"
+	"github.com/burakkaraceylan/xapi-go/pkg/client"
 	"github.com/spf13/cobra"
 )
 

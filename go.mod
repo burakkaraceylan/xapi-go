@@ -1,4 +1,4 @@
-module github.com/bkaraceylan/xapi-go
+module github.com/burakkaraceylan/xapi-go
 
 go 1.18
 

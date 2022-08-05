@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/bkaraceylan/xapi-go/pkg/resources/statement/properties"
+	"github.com/burakkaraceylan/xapi-go/pkg/resources/statement/properties"
 )
 
 // Statement represents an evidence for any sort of experience or event which is to be tracked in xAPI.

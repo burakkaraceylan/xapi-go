@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 
-	"github.com/bkaraceylan/xapi-go/pkg/resources/statement/properties"
+	"github.com/burakkaraceylan/xapi-go/pkg/resources/statement/properties"
 )
 
 // Returns JSON Object containing information about this LRS, including the xAPI version supported.

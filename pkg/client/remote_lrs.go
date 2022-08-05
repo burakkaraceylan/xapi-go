@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/bkaraceylan/xapi-go/pkg/resources/about"
-	"github.com/bkaraceylan/xapi-go/pkg/resources/statement"
-	"github.com/bkaraceylan/xapi-go/pkg/resources/statement/properties"
+	"github.com/burakkaraceylan/xapi-go/pkg/resources/about"
+	"github.com/burakkaraceylan/xapi-go/pkg/resources/statement"
+	"github.com/burakkaraceylan/xapi-go/pkg/resources/statement/properties"
 )
 
 // RemoteLRS represents a connection to an LRS

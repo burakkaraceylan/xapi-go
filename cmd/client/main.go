@@ -1,6 +1,6 @@
 package main
 
-import "github.com/bkaraceylan/xapi-go/internal/cmd"
+import "github.com/burakkaraceylan/xapi-go/internal/cmd"
 
 func main() {
 	cmd.Execute()

@@ -1,6 +1,6 @@
 package properties
 
-import "github.com/bkaraceylan/xapi-go/pkg/resources/statement/special"
+import "github.com/burakkaraceylan/xapi-go/pkg/resources/statement/special"
 
 // In some cases an Attachment is logically an important part of a Learning Record.
 // It could be an essay, a video, etc. Another example of such an Attachment is (the image of)
