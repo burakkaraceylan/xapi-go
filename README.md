@@ -57,7 +57,7 @@ The Experience API (or xAPI) is a new specification for learning technology that
 ## TODO
 ### Module
 - [x] About Resource
-- [.] State Resource
+- [*] State Resource
 - [ ] Documents Resource
 - [ ] Agents Resource
 - [ ] Activities Resource
@@ -65,7 +65,7 @@ The Experience API (or xAPI) is a new specification for learning technology that
 - [ ] Activity Profile Resource
 ### Module
 - [x] About Resource
-- [.] State Resource
+- [*] State Resource
 - [ ] Documents Resource
 - [ ] Agents Resource
 - [ ] Activities Resource
