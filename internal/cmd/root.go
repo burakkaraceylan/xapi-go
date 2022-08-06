@@ -95,6 +95,7 @@ var (
 	}
 )
 
+// Execute the root command
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -102,6 +103,7 @@ func Execute() {
 	}
 }
 
+// Initialize CLI args
 func init() {
 	rootCmd.PersistentFlags().StringVar(&endpoint, "endpoint", "", "URL of the API endpoint")
 
