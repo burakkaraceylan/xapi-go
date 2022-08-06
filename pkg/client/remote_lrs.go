@@ -175,7 +175,9 @@ func (lrs *RemoteLRS) GetStatement(id string) (*statement.Statement, *Response, 
 
 	statement := &statement.Statement{}
 
-	lrs_resp.Bind(statement)
+	if err := lrs_resp.Bind(statement); err != nil {
+		return nil, nil, err
+	}
 
 	return statement, lrs_resp, nil
 }

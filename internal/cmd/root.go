@@ -104,9 +104,17 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().StringVar(&endpoint, "endpoint", "", "URL of the API endpoint")
-	rootCmd.MarkPersistentFlagRequired("endpoint")
+
+	if err := rootCmd.MarkPersistentFlagRequired("endpoint"); err != nil {
+		panic(err)
+	}
+
 	rootCmd.PersistentFlags().StringVar(&version, "version", "", "API version")
-	rootCmd.MarkPersistentFlagRequired("version")
+
+	if err := rootCmd.MarkPersistentFlagRequired("version"); err != nil {
+		panic(err)
+	}
+
 	rootCmd.PersistentFlags().StringVar(&username, "username", "", "API user's username")
 	rootCmd.PersistentFlags().StringVar(&password, "password", "", "API user's password")
 	rootCmd.MarkFlagsRequiredTogether("username", "password")
