@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/burakkaraceylan/xapi-go/pkg/client"
+	"github.com/burakkaraceylan/xapi-go/pkg/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -53,7 +54,7 @@ var (
 				panic(err)
 			}
 
-			str, _ := stmt.ToJson(true)
+			str, _ := utils.ToJson(stmt, true)
 			fmt.Println(str)
 
 		},
@@ -88,7 +89,7 @@ var (
 				panic(err)
 			}
 
-			str, _ := stmt.ToJson(true)
+			str, _ := utils.ToJson(stmt, true)
 			fmt.Println(str)
 
 		},

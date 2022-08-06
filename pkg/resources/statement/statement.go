@@ -1,8 +1,6 @@
 package statement
 
 import (
-	"bytes"
-	"encoding/json"
 	"time"
 
 	"github.com/burakkaraceylan/xapi-go/pkg/resources/statement/properties"
@@ -22,29 +20,6 @@ type Statement struct {
 	Authority   *properties.Actor        `json:"authority,omitempty" xapi:"optional"`
 	Version     *string                  `json:"version,omitempty" xapi:"optional"`
 	Attachments *[]properties.Attachment `json:"attachments,omitempty" xapi:"optional"`
-}
-
-// Outputs the statement as Json
-func (stmt *Statement) ToJson(pretty bool) (string, error) {
-	var jsonr string
-	b, err := json.Marshal(stmt)
-
-	if err != nil {
-		return "", err
-	}
-
-	if pretty {
-		var prettyJSON bytes.Buffer
-		if err := json.Indent(&prettyJSON, b, "", "    "); err != nil {
-			return "", err
-		}
-
-		jsonr = prettyJSON.String()
-	} else {
-		jsonr = string(b)
-	}
-
-	return jsonr, nil
 }
 
 type MoreStatements struct {
