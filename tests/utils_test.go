@@ -15,7 +15,7 @@ type UtilsTestSuite struct {
 	suite.Suite
 }
 
-func (suite *ResourceTestSuite) TestToJSON() {
+func (suite *UtilsTestSuite) TestToJSON() {
 	actor := properties.Actor{
 		ObjectType: "Agent",
 		Name:       utils.Ptr("Foo Bar"),
