@@ -5,13 +5,10 @@ GOBIN         = $(shell go env GOBIN)
 ifeq ($(GOBIN),)
 GOBIN         = $(shell go env GOPATH)/bin
 endif
-GOX           = $(GOBIN)/gox
-GOIMPORTS     = $(GOBIN)/goimports
-AIR     	  = $(GOBIN)/air
-ARCH          = $(shell uname -m)
+GO 			  ?= go
+GOIMPORTS     ?= $(GOBIN)/goimports
 
 # List all our actual files, excluding vendor
-GOPKGS ?= $(shell go list $(FILES) | grep -v /vendor/)
 GOFILES ?= $(shell find . -name '*.go' | grep -v /vendor/)
 
 check-all: check-imports check-fmt check-mod ## Check all
@@ -57,7 +54,7 @@ check-mod: ## A check which lists extraneous dependencies, if they exist.
 .PHONY: check-mod
 
 fiximports: ## Properly formats and orders imports.
-	@echo "==> Fixing imports"
+		
 	@$(GOIMPORTS) -d ${GOFILES}
 .PHONY: fiximports
 
@@ -74,6 +71,27 @@ vet: ## Identifies common errors.
 run:
 	@go run ./cmd/client
 .PHONY: run
+
+test:
+	@echo "mode: count" > coverage.out
+	@go test ./tests/...  -cover --coverpkg ./... -coverprofile=profile.out > tmp.out
+	@cat tmp.out; 
+	@if grep -q "^--- FAIL" tmp.out; then \
+		rm tmp.out; \
+		exit 1; \
+	elif grep -q "build failed" tmp.out; then \
+		rm tmp.out; \
+		exit 1; \
+	elif grep -q "setup failed" tmp.out; then \
+		rm tmp.out; \
+		exit 1; \
+	fi; \
+	if [ -f profile.out ]; then \
+		cat profile.out | grep -v "mode:" >> coverage.out; \
+		rm profile.out; \
+	fi; \
+	rm tmp.out;
+.PHONY: test
 
 help: ## Prints this help menu.
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
