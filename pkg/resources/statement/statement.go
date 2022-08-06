@@ -22,7 +22,9 @@ type Statement struct {
 	Attachments *[]properties.Attachment `json:"attachments,omitempty" xapi:"optional"`
 }
 
-type MoreStatements struct {
+// A collection of Statements can be retrieved by performing a query on the Statement Resource
+// https://github.com/adlnet/xAPI-Spec/blob/master/xAPI-Data.md#retrieval
+type StatementResult struct {
 	More       string      `json:"more"`
 	Statements []Statement `json:"statements"`
 }

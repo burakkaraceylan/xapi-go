@@ -184,22 +184,28 @@ func (lrs *RemoteLRS) GetStatement(id string) (*statement.Statement, *Response, 
 
 // TODO: Return a Statement struct not a Response
 // GetVoidedStatement is used to fetch a single voided statement from record store
-func (lrs *RemoteLRS) GetVoidedStatement(id string) (*Response, error) {
+func (lrs *RemoteLRS) GetVoidedStatement(id string) (*statement.Statement, *Response, error) {
 	lrs_request := lrs.newRequest("GET", "statements", nil, &map[string]string{"voidedStatementId": id}, nil)
 
 	req, err := lrs_request.Init()
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	lrs_resp, err := lrs.sendRequest(req)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return lrs_resp, nil
+	statement := &statement.Statement{}
+
+	if err := lrs_resp.Bind(statement); err != nil {
+		return nil, nil, err
+	}
+
+	return statement, lrs_resp, nil
 }
 
 // QueryParams represents query parameters of a statement
@@ -291,7 +297,7 @@ func (q *QueryParams) Map() map[string]string {
 }
 
 // QueryStatements is used to query the statements on the LRS
-func (lrs *RemoteLRS) QueryStatements(params *QueryParams) (*statement.MoreStatements, error) {
+func (lrs *RemoteLRS) QueryStatements(params *QueryParams) (*statement.StatementResult, *Response, error) {
 
 	var query_params map[string]string
 
@@ -303,22 +309,22 @@ func (lrs *RemoteLRS) QueryStatements(params *QueryParams) (*statement.MoreState
 	req, err := lrs_request.Init()
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	lrs_resp, err := lrs.sendRequest(req)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	statements := &statement.MoreStatements{}
+	result := &statement.StatementResult{}
 
-	if err := lrs_resp.Bind(statements); err != nil {
-		return nil, err
+	if err := lrs_resp.Bind(result); err != nil {
+		return nil, nil, err
 	}
 
-	return statements, nil
+	return result, lrs_resp, nil
 }
 
 // About is used to fetch information about the LRS
