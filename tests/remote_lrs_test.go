@@ -42,6 +42,7 @@ func (suite *ResourceTestSuite) TestAboutResource() {
 	assert.NotEmpty(suite.T(), about.Version)
 }
 
+// TODO: Test voided statement
 func (suite *ResourceTestSuite) TestStatementResource() {
 	// Test [POST]
 
@@ -108,7 +109,7 @@ func (suite *ResourceTestSuite) TestStatementResource() {
 		},
 	}
 
-	statement := statement.Statement{
+	stmt1 := statement.Statement{
 		Actor:     actor,
 		Verb:      verb,
 		Context:   &context,
@@ -117,7 +118,7 @@ func (suite *ResourceTestSuite) TestStatementResource() {
 		Object:    object,
 	}
 
-	ids, resp, err := suite.lrs.SaveStatement(statement)
+	ids, resp, err := suite.lrs.SaveStatement(stmt1)
 	assert.Nil(suite.T(), err)
 	assert.Equal(suite.T(), 200, resp.Response.StatusCode)
 	assert.NotEmpty(suite.T(), ids)
@@ -171,12 +172,29 @@ func (suite *ResourceTestSuite) TestStatementResource() {
 	assert.Equal(suite.T(), *stmt.Object.Definition.Type, "http://activitystrea.ms/schema/1.0/game")
 	assert.Equal(suite.T(), *stmt.Object.ObjectType, "Activity")
 
+	//Test Multiple [POST]
+	stmts := []statement.Statement{stmt1, stmt1}
+	ids, resp, err = suite.lrs.SaveStatements(stmts)
+	assert.Nil(suite.T(), err)
+	assert.Equal(suite.T(), 200, resp.Response.StatusCode)
+	assert.Equal(suite.T(), len(ids), 2)
+
 	//Test [PUT]
-	statement.ID = utils.Ptr(uuid.New().String())
-	_, resp, err = suite.lrs.SaveStatement(statement)
+	stmt1.ID = utils.Ptr(uuid.New().String())
+	_, resp, err = suite.lrs.SaveStatement(stmt1)
 	assert.Nil(suite.T(), err)
 	assert.Equal(suite.T(), 204, resp.Response.StatusCode)
 
+	//Test Query [GET]
+	params := client.QueryParams{
+		Limit: utils.Ptr(int64(14)),
+	}
+
+	mresp, resp, err := suite.lrs.QueryStatements(&params)
+
+	assert.Nil(suite.T(), err)
+	assert.Equal(suite.T(), 200, resp.Response.StatusCode)
+	assert.Equal(suite.T(), len(mresp.Statements), 14)
 }
 
 func TestResourceTestSuite(t *testing.T) {

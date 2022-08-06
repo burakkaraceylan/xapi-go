@@ -4,7 +4,8 @@
 
 ## Overview
 
-XGO-Api is a client implemention for The Experience API (or xAPI) written in Golang.
+XGO-Api is a client library implemention for The Experience API (or xAPI) written in Golang. Repo also includes a CLI tool that can query learning record stores.
+
 ## The Experience API (xAPI)
 
 The Experience API (or xAPI) is a new specification for learning technology that makes it possible to collect data about the wide range of experiences a person has (online and offline). This API captures data in a consistent format about a person or group’s activities from many technologies. Very different systems are able to securely communicate by capturing and sharing this stream of activities using xAPI’s simple vocabulary.
@@ -59,15 +60,8 @@ The Experience API (or xAPI) is a new specification for learning technology that
 ## TODO
 ### Module
 - [x] About Resource
-- [*] State Resource
-- [ ] Documents Resource
-- [ ] Agents Resource
-- [ ] Activities Resource
-- [ ] Agent Profile Resource
-- [ ] Activity Profile Resource
-### Module
-- [x] About Resource
-- [*] State Resource
+- [X] Statement Resource
+- [ ] State Resource
 - [ ] Documents Resource
 - [ ] Agents Resource
 - [ ] Activities Resource
