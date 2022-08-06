@@ -34,6 +34,52 @@ func (suite *ResourceTestSuite) SetupSuite() {
 	suite.lrs = lrs
 }
 
+func (suite *ResourceTestSuite) TestQueryParams() {
+	actor := properties.Actor{
+		ObjectType: "Test",
+	}
+
+	verb := properties.Verb{
+		ID: "Test",
+	}
+
+	activity := properties.Object{
+		ID: "Test",
+	}
+
+	params := client.QueryParams{
+		StatementID:       utils.Ptr("Test"),
+		VoidedStatementId: utils.Ptr("Test"),
+		Agent:             &actor,
+		Verb:              &verb,
+		Activity:          &activity,
+		Registeration:     utils.Ptr("Test"),
+		RelatedActivities: utils.Ptr(true),
+		RelatedAgents:     utils.Ptr(true),
+		Since:             utils.Ptr(time.Time{}),
+		Until:             utils.Ptr(time.Time{}),
+		Format:            utils.Ptr("exact"),
+		Attachments:       utils.Ptr(true),
+		Ascending:         utils.Ptr(true),
+	}
+
+	q := params.Map()
+
+	assert.Equal(suite.T(), "Test", q["statementId"])
+	assert.Equal(suite.T(), "Test", q["voidedStatementId"])
+	assert.Equal(suite.T(), "Test", q["verb"])
+	assert.Equal(suite.T(), "Test", q["activity"])
+	assert.Equal(suite.T(), "Test", q["registeration"])
+	assert.Equal(suite.T(), "true", q["related_activities"])
+	assert.Equal(suite.T(), "true", q["related_agents"])
+	assert.Equal(suite.T(), "0001-01-01 00:00:00 +0000 UTC", q["since"])
+	assert.Equal(suite.T(), "0001-01-01 00:00:00 +0000 UTC", q["until"])
+	assert.Equal(suite.T(), "exact", q["format"])
+	assert.Equal(suite.T(), "true", q["attachments"])
+	assert.Equal(suite.T(), "true", q["ascending"])
+
+}
+
 func (suite *ResourceTestSuite) TestAboutResource() {
 	// Test [GET]
 	about, err := suite.lrs.About()
