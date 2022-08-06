@@ -71,3 +71,6 @@ The Experience API (or xAPI) is a new specification for learning technology that
 - [ ] Activities Resource
 - [ ] Agent Profile Resource
 - [ ] Activity Profile Resource
+
+## Test Coverage
+[![codecov](https://codecov.io/gh/burakkaraceylan/xapi-go/branch/main/graph/badge.svg?token=ECR4A27QDV)](https://codecov.io/gh/burakkaraceylan/xapi-go)
