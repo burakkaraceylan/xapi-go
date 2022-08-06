@@ -93,7 +93,7 @@ func (suite *ResourceTestSuite) TestToJSON() {
 	assert.Nil(suite.T(), err)
 	assert.Greater(suite.T(), len(s), 0)
 
-	s2, err := utils.ToJson(stmt1, false)
+	s2, err := utils.ToJson(stmt1, true)
 
 	assert.Nil(suite.T(), err)
 	assert.Greater(suite.T(), len(s2), len(s))
