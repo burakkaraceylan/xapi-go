@@ -9,9 +9,10 @@ GO 			  ?= go
 GOIMPORTS     ?= $(GOBIN)/goimports
 
 # List all our actual files, excluding vendor
+PACKAGES ?= $(shell $(GO) list ./...)
 GOFILES ?= $(shell find . -name '*.go' | grep -v /vendor/)
 
-check-all: check-imports check-fmt check-mod ## Check all
+check-all: check-imports check-fmt check-mod vet ## Check all
 .PHONY: check-all
 
 fix-all: vendor tidy fiximports fmt vet ## Fix all
@@ -65,7 +66,7 @@ fmt: ## Properly formats Go files and orders dependencies.
 
 vet: ## Identifies common errors.
 	@echo "==> Running go vet"
-	@go vet ./...
+	@go vet ${PACKAGES}
 .PHONY: vet
 
 run:
