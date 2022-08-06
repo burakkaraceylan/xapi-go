@@ -1,7 +1,6 @@
 package client
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -83,14 +82,4 @@ func (r *Response) String() string {
 	str := fmt.Sprintf("Code: %d\n", r.Status)
 	str += fmt.Sprintf("URL: %s\n", r.Request.URL)
 	return str
-}
-
-func (r *Response) Pretty() (string, error) {
-	bodyBytes, _ := io.ReadAll(r.Response.Body)
-	var prettyJSON bytes.Buffer
-	if err := json.Indent(&prettyJSON, bodyBytes, "", "    "); err != nil {
-		return "", err
-	}
-	return prettyJSON.String(), nil
-
 }
