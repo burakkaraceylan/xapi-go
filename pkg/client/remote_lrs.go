@@ -3,6 +3,7 @@ package client
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
@@ -59,17 +60,19 @@ func (lrs *RemoteLRS) sendRequest(req *http.Request) (*Response, error) {
 }
 
 // SaveStatement is used to save a statement to the record store
-func (lrs *RemoteLRS) SaveStatement(statement statement.Statement) (*Response, error) {
+func (lrs *RemoteLRS) SaveStatement(statement statement.Statement) ([]string, *Response, error) {
 	lrs_req := lrs.newRequest("POST", "statements", nil, nil, nil)
 
-	if len(statement.ID) == 0 {
+	if statement.ID != nil && len(*statement.ID) != 0 {
 		lrs_req.Method = "PUT"
+		params := map[string]string{"statementId": *statement.ID}
+		lrs_req.QueryParams = &params
 	}
 
 	b, err := json.Marshal(statement)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	str := string(b)
@@ -78,40 +81,103 @@ func (lrs *RemoteLRS) SaveStatement(statement statement.Statement) (*Response, e
 	req, err := lrs_req.Init()
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	resp, err := lrs.sendRequest(req)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return resp, nil
+	// If we used PUT we don't expect a return value
+	if statement.ID != nil {
+		return nil, resp, nil
+	}
+
+	// If we used POST we expect an array of uuid strings
+	var idList []string
+
+	b, err = io.ReadAll(resp.Response.Body)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = json.Unmarshal(b, &idList)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return idList, resp, nil
+
+}
+
+// SaveStatements is used to save multiple statement to the record store
+func (lrs *RemoteLRS) SaveStatements(statements []statement.Statement) ([]string, *Response, error) {
+	lrs_req := lrs.newRequest("POST", "statements", nil, nil, nil)
+
+	b, err := json.Marshal(statements)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	str := string(b)
+	lrs_req.Content = &str
+
+	req, err := lrs_req.Init()
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	resp, err := lrs.sendRequest(req)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var idList []string
+
+	b, err = io.ReadAll(resp.Response.Body)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = json.Unmarshal(b, &idList)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return idList, resp, nil
 
 }
 
 // GetStatement is used to fetch a single statement from record store
-func (lrs *RemoteLRS) GetStatement(id string) (*statement.Statement, error) {
+func (lrs *RemoteLRS) GetStatement(id string) (*statement.Statement, *Response, error) {
 	lrs_request := lrs.newRequest("GET", "statements", nil, &map[string]string{"statementId": id}, nil)
 
 	req, err := lrs_request.Init()
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	lrs_resp, err := lrs.sendRequest(req)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	statement := &statement.Statement{}
 
 	lrs_resp.Bind(statement)
 
-	return statement, nil
+	return statement, lrs_resp, nil
 }
 
 // TODO: Return a Statement struct not a Response

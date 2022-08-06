@@ -14,13 +14,13 @@ type Definition struct {
 	Description             *special.LanguageMap   `json:"description,omitempty" xApi:"recommended"`
 	Type                    *string                `json:"type,omitempty" xApi:"recommended"`
 	MoreInfo                *string                `json:"moreInfo,omitempty" xApi:"optional"`
-	InteractionType         string                 `json:"interactionType" xApi:"required"`
-	CorrectResponsesPattern *[]string              `json:"correctResponsesPattern" xApi:"optonal"`
-	Choices                 *[]InteractionComponet `json:"choices,omitempty" xApi:"optonal"`
-	Scale                   *[]InteractionComponet `json:"scale,omitempty" xApi:"optonal"`
-	Source                  *[]InteractionComponet `json:"source,omitempty" xApi:"optonal"`
-	Target                  *[]InteractionComponet `json:"target,omitempty" xApi:"optonal"`
-	Steps                   *[]InteractionComponet `json:"steps,omitempty" xApi:"optonal"`
+	InteractionType         *string                `json:"interactionType,omitempty" xApi:"required"`
+	CorrectResponsesPattern *[]string              `json:"correctResponsesPattern,omitempty" xApi:"optional"`
+	Choices                 *[]InteractionComponet `json:"choices,omitempty" xApi:"optional"`
+	Scale                   *[]InteractionComponet `json:"scale,omitempty" xApi:"optional"`
+	Source                  *[]InteractionComponet `json:"source,omitempty" xApi:"optional"`
+	Target                  *[]InteractionComponet `json:"target,omitempty" xApi:"optional"`
+	Steps                   *[]InteractionComponet `json:"steps,omitempty" xApi:"optional"`
 }
 
 // The Object defines the thing that was acted on. The Object of a Statement can be an Activity, Agent/Group, SubStatement, or Statement

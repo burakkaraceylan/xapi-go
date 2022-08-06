@@ -47,7 +47,7 @@ var (
 				panic(err)
 			}
 
-			stmt, err := lrs.GetStatement(args[0])
+			stmt, _, err := lrs.GetStatement(args[0])
 
 			if err != nil {
 				panic(err)
