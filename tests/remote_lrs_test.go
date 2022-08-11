@@ -1,30 +1,51 @@
 package tests
 
 import (
+	"math/rand"
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
-
 	"github.com/burakkaraceylan/xapi-go/pkg/client"
+	"github.com/burakkaraceylan/xapi-go/pkg/resources"
+	activityprofile "github.com/burakkaraceylan/xapi-go/pkg/resources/activity_profile"
+	"github.com/burakkaraceylan/xapi-go/pkg/resources/state"
 	"github.com/burakkaraceylan/xapi-go/pkg/resources/statement"
 	"github.com/burakkaraceylan/xapi-go/pkg/resources/statement/properties"
 	"github.com/burakkaraceylan/xapi-go/pkg/resources/statement/special"
 	"github.com/burakkaraceylan/xapi-go/pkg/utils"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
 
 type ResourceTestSuite struct {
 	suite.Suite
-	lrs *client.RemoteLRS
+	lrs    *client.RemoteLRS
+	Agent  properties.Actor
+	Object properties.Object
+	Verb   properties.Verb
 }
 
 func (suite *ResourceTestSuite) SetupSuite() {
+	//username := os.Getenv("XapiSandboxUsername")
+	//password := os.Getenv("XapiSandboxPassword")
+
+	username := "bKbNeGNaz-xbnTAHhR8"
+	password := "mA1QI0wZuaBs2HBzCQI"
+
+	if len(username) == 0 {
+		panic("Sandbox username not present in environment variables")
+	}
+
+	if len(password) == 0 {
+		panic("Sandbox password not present in environment variables")
+	}
+
 	lrs, err := client.NewRemoteLRS(
-		"https://cloud.scorm.com/ScormEngineInterface/TCAPI/public/",
+		"https://cloud.scorm.com/lrs/OSQO3KVP5L/sandbox/",
 		"1.0.0",
-		"Basic VGVzdFVzZXI6cGFzc3dvcmQ=",
+		username,
+		password,
 	)
 
 	if err != nil {
@@ -47,7 +68,7 @@ func (suite *ResourceTestSuite) TestQueryParams() {
 		ID: "Test",
 	}
 
-	params := client.QueryParams{
+	params := client.StatementQueryParams{
 		StatementID:       utils.Ptr("Test"),
 		VoidedStatementId: utils.Ptr("Test"),
 		Agent:             &actor,
@@ -89,150 +110,113 @@ func (suite *ResourceTestSuite) TestAboutResource() {
 }
 
 // TODO: Test voided statement
-func (suite *ResourceTestSuite) TestStatementResource() {
+func (suite *ResourceTestSuite) TestSaveStatement() {
 	// Test [POST]
 
-	actor := properties.Actor{
-		ObjectType: "Agent",
-		Name:       utils.Ptr("Foo Bar"),
-		Mbox:       utils.Ptr("mailto:foo@bar.com"),
-	}
-
-	verb := properties.Verb{
-		ID:      "http://adlnet.gov/expapi/verbs/initialized",
-		Display: special.LanguageMap{"en-US": "initialized"},
-	}
-
-	object := properties.Object{
-		ID:         "http://id.tincanapi.com/activity/tincan-prototypes/tetris",
-		ObjectType: utils.Ptr("Activity"),
-		Definition: &properties.Definition{
-			Name:        &special.LanguageMap{"en-US": "Js Tetris - Tin Can Prototype"},
-			Description: &special.LanguageMap{"en-US": "A game of tetris."},
-			Type:        utils.Ptr("http://activitystrea.ms/schema/1.0/game"),
+	stmt := statement.Statement{
+		Actor: properties.Actor{
+			ObjectType: "Agent",
+			Mbox:       utils.Ptr("mailto:bkaraceylan@gmail.com"),
+		},
+		Object: properties.Object{
+			ObjectType: utils.Ptr("Activity"),
+			ID:         "http://github.com/bkaraceylan/xapi-go/Test/Unit/0",
+			Definition: &properties.Definition{
+				Type:        utils.Ptr("http://github.com/bkaraceylan/xapi-go/activitytype/unit-test"),
+				Name:        &special.LanguageMap{"en-US": "Golang tests"},
+				Description: &special.LanguageMap{"en-US": "xapi-go golang client library unit tests"},
+			},
+		},
+		Verb: properties.Verb{
+			ID:      "http://github.com/bkaraceylan/xapi-go/Test/performed",
+			Display: special.LanguageMap{"en-US": "Performed test"},
 		},
 	}
 
-	cat1 := properties.Object{
-		ID:         "http://id.tincanapi.com/recipe/tincan-prototypes/tetris/1",
-		ObjectType: utils.Ptr("Activity"),
-		Definition: &properties.Definition{
-			Type: utils.Ptr("http://id.tincanapi.com/activitytype/recipe"),
-		},
-	}
-
-	cat2 := properties.Object{
-		ID:         "http://id.tincanapi.com/activity/tincan-prototypes/tetris-template",
-		ObjectType: utils.Ptr("Activity"),
-		Definition: &properties.Definition{
-			Type: utils.Ptr("http://id.tincanapi.com/activitytype/source"),
-		},
-	}
-
-	grp1 := properties.Object{
-		ID:         "http://id.tincanapi.com/activity/tincan-prototypes",
-		ObjectType: utils.Ptr("Activity"),
-	}
-
-	grp2 := properties.Object{
-		ID:         "http://id.tincanapi.com/activity/tincan-prototypes/tetris",
-		ObjectType: utils.Ptr("Activity"),
-	}
-
-	context := properties.Context{
-		Registration: utils.Ptr("e168d6a3-46b2-4233-82e7-66b73a179727"),
-		ContextActivities: &properties.ContextActivities{
-			Category: &[]properties.Object{cat1, cat2},
-			Grouping: &[]properties.Object{grp1, grp2},
-		},
-	}
-
-	authority := properties.Actor{
-		ObjectType: "Agent",
-		Account: &properties.Account{
-			Name:     "anonymous",
-			HomePage: "http://cloud.scorm.com",
-		},
-	}
-
-	stmt1 := statement.Statement{
-		Actor:     actor,
-		Verb:      verb,
-		Context:   &context,
-		Version:   utils.Ptr("1.0.0"),
-		Authority: &authority,
-		Object:    object,
-	}
-
-	ids, resp, err := suite.lrs.SaveStatement(stmt1)
+	ids, resp, err := suite.lrs.SaveStatement(stmt)
 	assert.Nil(suite.T(), err)
 	assert.Equal(suite.T(), 200, resp.Response.StatusCode)
 	assert.NotEmpty(suite.T(), ids)
+}
 
-	// Test [GET]
+func (suite *ResourceTestSuite) TestSaveMultipleStatements() {
+	stmt1 := statement.Statement{
+		Actor: properties.Actor{
+			ObjectType: "Agent",
+			Mbox:       utils.Ptr("mailto:bkaraceylan@gmail.com"),
+		},
+		Object: properties.Object{
+			ObjectType: utils.Ptr("Activity"),
+			ID:         "http://github.com/bkaraceylan/xapi-go/Test/Unit/0",
+			Definition: &properties.Definition{
+				Type:        utils.Ptr("http://github.com/bkaraceylan/xapi-go/activitytype/unit-test"),
+				Name:        &special.LanguageMap{"en-US": "Golang tests"},
+				Description: &special.LanguageMap{"en-US": "xapi-go golang client library unit tests"},
+			},
+		},
+		Verb: properties.Verb{
+			ID:      "http://github.com/bkaraceylan/xapi-go/Test/performed",
+			Display: special.LanguageMap{"en-US": "Performed test"},
+		},
+	}
 
-	stmt, resp, err := suite.lrs.GetStatement(ids[0])
-	assert.Nil(suite.T(), err)
-	assert.Equal(suite.T(), 200, resp.Response.StatusCode)
+	stmt2 := statement.Statement{
+		Actor: properties.Actor{
+			ObjectType: "Agent",
+			Mbox:       utils.Ptr("mailto:bkaraceylan@gmail.com"),
+		},
+		Object: properties.Object{
+			ObjectType: utils.Ptr("Activity"),
+			ID:         "http://github.com/bkaraceylan/xapi-go/Test/Unit/0",
+			Definition: &properties.Definition{
+				Type:        utils.Ptr("http://github.com/bkaraceylan/xapi-go/activitytype/unit-test"),
+				Name:        &special.LanguageMap{"en-US": "Golang tests"},
+				Description: &special.LanguageMap{"en-US": "xapi-go golang client library unit tests"},
+			},
+		},
+		Verb: properties.Verb{
+			ID:      "http://github.com/bkaraceylan/xapi-go/Test/performed",
+			Display: special.LanguageMap{"en-US": "Performed test"},
+		},
+	}
 
-	assert.Equal(suite.T(), *stmt.ID, ids[0])
-	assert.Equal(suite.T(), stmt.Actor.ObjectType, "Agent")
-	assert.Equal(suite.T(), *stmt.Actor.Name, "Foo Bar")
-	assert.Equal(suite.T(), *stmt.Actor.Mbox, "mailto:foo@bar.com")
+	stmts := []statement.Statement{stmt1, stmt2}
 
-	assert.Equal(suite.T(), stmt.Verb.ID, "http://adlnet.gov/expapi/verbs/initialized")
-	assert.Equal(suite.T(), stmt.Verb.Display["en-US"], "initialized")
-
-	assert.Equal(suite.T(), *stmt.Context.Registration, "e168d6a3-46b2-4233-82e7-66b73a179727")
-
-	assert.Equal(suite.T(), len(*stmt.Context.ContextActivities.Category), 2)
-
-	assert.Equal(suite.T(), (*stmt.Context.ContextActivities.Category)[0].ID, "http://id.tincanapi.com/recipe/tincan-prototypes/tetris/1")
-	assert.Equal(suite.T(), *(*stmt.Context.ContextActivities.Category)[0].ObjectType, "Activity")
-	assert.Equal(suite.T(), *(*stmt.Context.ContextActivities.Category)[0].Definition.Type, "http://id.tincanapi.com/activitytype/recipe")
-
-	assert.Equal(suite.T(), (*stmt.Context.ContextActivities.Category)[1].ID, "http://id.tincanapi.com/activity/tincan-prototypes/tetris-template")
-	assert.Equal(suite.T(), *(*stmt.Context.ContextActivities.Category)[1].ObjectType, "Activity")
-	assert.Equal(suite.T(), *(*stmt.Context.ContextActivities.Category)[1].Definition.Type, "http://id.tincanapi.com/activitytype/source")
-
-	assert.Equal(suite.T(), len(*stmt.Context.ContextActivities.Grouping), 2)
-
-	assert.Equal(suite.T(), (*stmt.Context.ContextActivities.Grouping)[0].ID, "http://id.tincanapi.com/activity/tincan-prototypes")
-	assert.Equal(suite.T(), *(*stmt.Context.ContextActivities.Category)[0].ObjectType, "Activity")
-
-	assert.Equal(suite.T(), (*stmt.Context.ContextActivities.Grouping)[1].ID, "http://id.tincanapi.com/activity/tincan-prototypes/tetris")
-	assert.Equal(suite.T(), *(*stmt.Context.ContextActivities.Category)[1].ObjectType, "Activity")
-
-	assert.WithinDuration(suite.T(), time.Now(), *stmt.Timestamp, time.Second*10)
-	assert.WithinDuration(suite.T(), time.Now(), *stmt.Stored, time.Second*10)
-
-	assert.Equal(suite.T(), stmt.Authority.ObjectType, "Agent")
-	assert.Equal(suite.T(), stmt.Authority.Account.Name, "anonymous")
-	assert.Equal(suite.T(), stmt.Authority.Account.HomePage, "http://cloud.scorm.com")
-
-	assert.Equal(suite.T(), *stmt.Version, "1.0.0")
-
-	assert.Equal(suite.T(), stmt.Object.ID, "http://id.tincanapi.com/activity/tincan-prototypes/tetris")
-	assert.Equal(suite.T(), (*stmt.Object.Definition.Name)["en-US"], "Js Tetris - Tin Can Prototype")
-	assert.Equal(suite.T(), (*stmt.Object.Definition.Description)["en-US"], "A game of tetris.")
-	assert.Equal(suite.T(), *stmt.Object.Definition.Type, "http://activitystrea.ms/schema/1.0/game")
-	assert.Equal(suite.T(), *stmt.Object.ObjectType, "Activity")
-
-	//Test Multiple [POST]
-	stmts := []statement.Statement{stmt1, stmt1}
-	ids, resp, err = suite.lrs.SaveStatements(stmts)
+	ids, resp, err := suite.lrs.SaveStatements(stmts)
 	assert.Nil(suite.T(), err)
 	assert.Equal(suite.T(), 200, resp.Response.StatusCode)
 	assert.Equal(suite.T(), len(ids), 2)
+}
 
-	//Test [PUT]
-	stmt1.ID = utils.Ptr(uuid.New().String())
-	_, resp, err = suite.lrs.SaveStatement(stmt1)
+func (suite *ResourceTestSuite) TestPutStatement() {
+	stmt := statement.Statement{
+		ID: utils.Ptr(uuid.New().String()),
+		Actor: properties.Actor{
+			ObjectType: "Agent",
+			Mbox:       utils.Ptr("mailto:bkaraceylan@gmail.com"),
+		},
+		Object: properties.Object{
+			ObjectType: utils.Ptr("Activity"),
+			ID:         "http://github.com/bkaraceylan/xapi-go/Test/Unit/0",
+			Definition: &properties.Definition{
+				Type:        utils.Ptr("http://github.com/bkaraceylan/xapi-go/activitytype/unit-test"),
+				Name:        &special.LanguageMap{"en-US": "Golang tests"},
+				Description: &special.LanguageMap{"en-US": "xapi-go golang client library unit tests"},
+			},
+		},
+		Verb: properties.Verb{
+			ID:      "http://github.com/bkaraceylan/xapi-go/Test/performed",
+			Display: special.LanguageMap{"en-US": "Performed test"},
+		},
+	}
+
+	_, resp, err := suite.lrs.SaveStatement(stmt)
 	assert.Nil(suite.T(), err)
 	assert.Equal(suite.T(), 204, resp.Response.StatusCode)
+}
 
-	//Test Query [GET]
-	params := client.QueryParams{
+func (suite *ResourceTestSuite) TestStatementQueryParams() {
+	params := client.StatementQueryParams{
 		Limit: utils.Ptr(int64(14)),
 	}
 
@@ -240,7 +224,380 @@ func (suite *ResourceTestSuite) TestStatementResource() {
 
 	assert.Nil(suite.T(), err)
 	assert.Equal(suite.T(), 200, resp.Response.StatusCode)
-	assert.Equal(suite.T(), len(mresp.Statements), 14)
+	assert.LessOrEqual(suite.T(), len(mresp.Statements), 14)
+}
+
+func (suite *ResourceTestSuite) TestGetStatement() {
+	// Test [POST]
+
+	actor := properties.Actor{
+		ObjectType: "Agent",
+		Mbox:       utils.Ptr("mailto:bkaraceylan@gmail.com"),
+	}
+
+	object := properties.Object{
+		ObjectType: utils.Ptr("Activity"),
+		ID:         "http://github.com/bkaraceylan/xapi-go/Test/Unit/0",
+		Definition: &properties.Definition{
+			Type:        utils.Ptr("http://github.com/bkaraceylan/xapi-go/activitytype/unit-test"),
+			Name:        &special.LanguageMap{"en-US": "Golang tests"},
+			Description: &special.LanguageMap{"en-US": "xapi-go golang client library unit tests"},
+		},
+	}
+
+	verb := properties.Verb{
+		ID:      "http://github.com/bkaraceylan/xapi-go/Test/performed",
+		Display: special.LanguageMap{"en-US": "Performed test"},
+	}
+
+	stmt := statement.Statement{
+		Actor:  actor,
+		Object: object,
+		Verb:   verb,
+	}
+
+	ids, resp, err := suite.lrs.SaveStatement(stmt)
+	assert.Nil(suite.T(), err)
+	assert.Equal(suite.T(), 200, resp.Response.StatusCode)
+	assert.NotEmpty(suite.T(), ids)
+
+	retrieved, resp, err := suite.lrs.GetStatement(ids[0])
+	assert.Nil(suite.T(), err)
+	assert.Equal(suite.T(), 200, resp.Response.StatusCode)
+	assert.Equal(suite.T(), actor, retrieved.Actor)
+	assert.Equal(suite.T(), object, retrieved.Object)
+	assert.Equal(suite.T(), verb, retrieved.Verb)
+	assert.NotNil(suite.T(), retrieved.Stored)
+	assert.NotEqual(suite.T(), time.Time{}, *retrieved.Stored)
+
+	auth := properties.Actor{
+		ObjectType: "Agent",
+		Name:       utils.Ptr("Unnamed Account"),
+		Account: &properties.Account{
+			HomePage: "http://cloud.scorm.com",
+			Name:     "bKbNeGNaz-xbnTAHhR8",
+		},
+	}
+
+	assert.Equal(suite.T(), auth, *retrieved.Authority)
+}
+
+func (suite *ResourceTestSuite) TestGetStateIds() {
+	params := client.GetStateIdsQueryParams{
+		Agent: properties.Actor{
+			ObjectType: "Agent",
+			Mbox:       utils.Ptr("mailto:bkaraceylan@gmail.com"),
+		},
+		Activity: properties.Object{
+			ObjectType: utils.Ptr("Activity"),
+			ID:         "http://github.com/bkaraceylan/xapi-go/Test/Unit/0",
+			Definition: &properties.Definition{
+				Type:        utils.Ptr("http://github.com/bkaraceylan/xapi-go/activitytype/unit-test"),
+				Name:        &special.LanguageMap{"en-US": "Golang tests"},
+				Description: &special.LanguageMap{"en-US": "xapi-go golang client library unit tests"},
+			},
+		},
+	}
+
+	_, resp, err := suite.lrs.GetStateIds(&params)
+
+	assert.Nil(suite.T(), err)
+	assert.Equal(suite.T(), 200, resp.Response.StatusCode)
+}
+
+func (suite *ResourceTestSuite) TestGetState() {
+	params := client.GetStateQueryParams{
+		Agent: properties.Actor{
+			ObjectType: "Agent",
+			Mbox:       utils.Ptr("mailto:bkaraceylan@gmail.com"),
+		},
+		Activity: properties.Object{
+			ObjectType: utils.Ptr("Activity"),
+			ID:         "http://github.com/bkaraceylan/xapi-go/Test/Unit/0",
+			Definition: &properties.Definition{
+				Type:        utils.Ptr("http://github.com/bkaraceylan/xapi-go/activitytype/unit-test"),
+				Name:        &special.LanguageMap{"en-US": "Golang tests"},
+				Description: &special.LanguageMap{"en-US": "xapi-go golang client library unit tests"},
+			},
+		},
+		StateID: "test",
+	}
+
+	_, resp, err := suite.lrs.GetState(&params)
+
+	assert.Nil(suite.T(), err)
+	assert.Equal(suite.T(), 404, resp.Response.StatusCode)
+}
+
+func (suite *ResourceTestSuite) TestSaveState() {
+	rand.Seed(time.Now().UnixNano())
+
+	id := RandomString(5)
+
+	doc := state.StateDocument{
+		Agent: properties.Actor{
+			ObjectType: "Agent",
+			Mbox:       utils.Ptr("mailto:bkaraceylan@gmail.com"),
+		},
+		Activity: properties.Object{
+			ObjectType: utils.Ptr("Activity"),
+			ID:         "http://github.com/bkaraceylan/xapi-go/Test/Unit/0",
+			Definition: &properties.Definition{
+				Type:        utils.Ptr("http://github.com/bkaraceylan/xapi-go/activitytype/unit-test"),
+				Name:        &special.LanguageMap{"en-US": "Golang tests"},
+				Description: &special.LanguageMap{"en-US": "xapi-go golang client library unit tests"},
+			},
+		},
+		Document: resources.Document{
+			ID:      id,
+			Content: []byte("test"),
+		},
+	}
+
+	_, resp, err := suite.lrs.SaveState(&doc)
+
+	assert.Nil(suite.T(), err)
+	assert.Equal(suite.T(), 204, resp.Response.StatusCode)
+
+	params := client.GetStateQueryParams{
+		Agent: properties.Actor{
+			ObjectType: "Agent",
+			Mbox:       utils.Ptr("mailto:bkaraceylan@gmail.com"),
+		},
+		Activity: properties.Object{
+			ObjectType: utils.Ptr("Activity"),
+			ID:         "http://github.com/bkaraceylan/xapi-go/Test/Unit/0",
+			Definition: &properties.Definition{
+				Type:        utils.Ptr("http://github.com/bkaraceylan/xapi-go/activitytype/unit-test"),
+				Name:        &special.LanguageMap{"en-US": "Golang tests"},
+				Description: &special.LanguageMap{"en-US": "xapi-go golang client library unit tests"},
+			},
+		},
+		StateID: id,
+	}
+
+	rdoc, resp, err := suite.lrs.GetState(&params)
+	assert.Nil(suite.T(), err)
+	assert.Equal(suite.T(), 200, resp.Response.StatusCode)
+	assert.Equal(suite.T(), id, rdoc.ID)
+	assert.Equal(suite.T(), []byte("test"), rdoc.Content)
+}
+
+func (suite *ResourceTestSuite) TestDeleteState() {
+	rand.Seed(time.Now().UnixNano())
+
+	id := RandomString(5)
+
+	doc := state.StateDocument{
+		Agent: properties.Actor{
+			ObjectType: "Agent",
+			Mbox:       utils.Ptr("mailto:bkaraceylan@gmail.com"),
+		},
+		Activity: properties.Object{
+			ObjectType: utils.Ptr("Activity"),
+			ID:         "http://github.com/bkaraceylan/xapi-go/Test/Unit/0",
+			Definition: &properties.Definition{
+				Type:        utils.Ptr("http://github.com/bkaraceylan/xapi-go/activitytype/unit-test"),
+				Name:        &special.LanguageMap{"en-US": "Golang tests"},
+				Description: &special.LanguageMap{"en-US": "xapi-go golang client library unit tests"},
+			},
+		},
+		Document: resources.Document{
+			ID:      id,
+			Content: []byte("test"),
+		},
+	}
+
+	_, resp, err := suite.lrs.SaveState(&doc)
+
+	assert.Nil(suite.T(), err)
+	assert.Equal(suite.T(), 204, resp.Response.StatusCode)
+
+	resp, err = suite.lrs.DeleteState(&doc)
+	assert.Nil(suite.T(), err)
+	assert.Equal(suite.T(), 204, resp.Response.StatusCode)
+}
+
+func (suite *ResourceTestSuite) TestClearStates() {
+	rand.Seed(time.Now().UnixNano())
+
+	id := RandomString(5)
+
+	doc := state.StateDocument{
+		Agent: properties.Actor{
+			ObjectType: "Agent",
+			Mbox:       utils.Ptr("mailto:bkaraceylan@gmail.com"),
+		},
+		Activity: properties.Object{
+			ObjectType: utils.Ptr("Activity"),
+			ID:         "http://github.com/bkaraceylan/xapi-go/Test/Unit/0",
+			Definition: &properties.Definition{
+				Type:        utils.Ptr("http://github.com/bkaraceylan/xapi-go/activitytype/unit-test"),
+				Name:        &special.LanguageMap{"en-US": "Golang tests"},
+				Description: &special.LanguageMap{"en-US": "xapi-go golang client library unit tests"},
+			},
+		},
+		Document: resources.Document{
+			ID:      id,
+			Content: []byte("test"),
+		},
+	}
+
+	_, resp, err := suite.lrs.SaveState(&doc)
+
+	assert.Nil(suite.T(), err)
+	assert.Equal(suite.T(), 204, resp.Response.StatusCode)
+
+	doc.ID = RandomString(5)
+
+	_, resp, err = suite.lrs.SaveState(&doc)
+
+	assert.Nil(suite.T(), err)
+	assert.Equal(suite.T(), 204, resp.Response.StatusCode)
+
+	doc.ID = ""
+
+	resp, err = suite.lrs.DeleteState(&doc)
+	assert.Nil(suite.T(), err)
+	assert.Equal(suite.T(), 204, resp.Response.StatusCode)
+
+	query := client.GetStateIdsQueryParams{
+		Agent: properties.Actor{
+			ObjectType: "Agent",
+			Mbox:       utils.Ptr("mailto:bkaraceylan@gmail.com"),
+		},
+		Activity: properties.Object{
+			ObjectType: utils.Ptr("Activity"),
+			ID:         "http://github.com/bkaraceylan/xapi-go/Test/Unit/0",
+			Definition: &properties.Definition{
+				Type:        utils.Ptr("http://github.com/bkaraceylan/xapi-go/activitytype/unit-test"),
+				Name:        &special.LanguageMap{"en-US": "Golang tests"},
+				Description: &special.LanguageMap{"en-US": "xapi-go golang client library unit tests"},
+			},
+		},
+	}
+
+	ids, resp, err := suite.lrs.GetStateIds(&query)
+
+	assert.Nil(suite.T(), err)
+	assert.Equal(suite.T(), 200, resp.Response.StatusCode)
+	assert.Equal(suite.T(), 0, len(ids))
+}
+
+func (suite *ResourceTestSuite) TestGetActivityProfileIds() {
+	params := client.GetActivityProfilesParams{
+		Activity: properties.Object{
+			ObjectType: utils.Ptr("Activity"),
+			ID:         "http://github.com/bkaraceylan/xapi-go/Test/Unit/0",
+			Definition: &properties.Definition{
+				Type:        utils.Ptr("http://github.com/bkaraceylan/xapi-go/activitytype/unit-test"),
+				Name:        &special.LanguageMap{"en-US": "Golang tests"},
+				Description: &special.LanguageMap{"en-US": "xapi-go golang client library unit tests"},
+			},
+		},
+	}
+
+	_, resp, err := suite.lrs.GetActivityProfileIds(&params)
+
+	assert.Nil(suite.T(), err)
+	assert.Equal(suite.T(), 200, resp.Response.StatusCode)
+}
+
+func (suite *ResourceTestSuite) TestGetActivityProfile() {
+	params := client.GetActivityProfileParams{
+		Activity: properties.Object{
+			ObjectType: utils.Ptr("Activity"),
+			ID:         "http://github.com/bkaraceylan/xapi-go/Test/Unit/0",
+			Definition: &properties.Definition{
+				Type:        utils.Ptr("http://github.com/bkaraceylan/xapi-go/activitytype/unit-test"),
+				Name:        &special.LanguageMap{"en-US": "Golang tests"},
+				Description: &special.LanguageMap{"en-US": "xapi-go golang client library unit tests"},
+			},
+		},
+		ProfileID: "test",
+	}
+
+	_, resp, err := suite.lrs.GetActivityProfile(&params)
+
+	assert.Nil(suite.T(), err)
+	assert.Equal(suite.T(), 404, resp.Response.StatusCode)
+}
+
+func (suite *ResourceTestSuite) TestSaveActivtiyProfile() {
+	rand.Seed(time.Now().UnixNano())
+
+	id := RandomString(5)
+
+	doc := activityprofile.ActivityDocument{
+		Activity: properties.Object{
+			ObjectType: utils.Ptr("Activity"),
+			ID:         "http://github.com/bkaraceylan/xapi-go/Test/Unit/0",
+			Definition: &properties.Definition{
+				Type:        utils.Ptr("http://github.com/bkaraceylan/xapi-go/activitytype/unit-test"),
+				Name:        &special.LanguageMap{"en-US": "Golang tests"},
+				Description: &special.LanguageMap{"en-US": "xapi-go golang client library unit tests"},
+			},
+		},
+		Document: resources.Document{
+			ID:      id,
+			Content: []byte("test"),
+		},
+	}
+
+	_, resp, err := suite.lrs.SaveActivityProfile(&doc)
+
+	assert.Nil(suite.T(), err)
+	assert.Equal(suite.T(), 204, resp.Response.StatusCode)
+
+	params := client.GetActivityProfileParams{
+		Activity: properties.Object{
+			ObjectType: utils.Ptr("Activity"),
+			ID:         "http://github.com/bkaraceylan/xapi-go/Test/Unit/0",
+			Definition: &properties.Definition{
+				Type:        utils.Ptr("http://github.com/bkaraceylan/xapi-go/activitytype/unit-test"),
+				Name:        &special.LanguageMap{"en-US": "Golang tests"},
+				Description: &special.LanguageMap{"en-US": "xapi-go golang client library unit tests"},
+			},
+		},
+		ProfileID: id,
+	}
+
+	rdoc, resp, err := suite.lrs.GetActivityProfile(&params)
+	assert.Nil(suite.T(), err)
+	assert.Equal(suite.T(), 200, resp.Response.StatusCode)
+	assert.Equal(suite.T(), id, rdoc.ID)
+	assert.Equal(suite.T(), []byte("test"), rdoc.Content)
+}
+
+func (suite *ResourceTestSuite) TestDeleteActivityProfile() {
+	rand.Seed(time.Now().UnixNano())
+
+	id := RandomString(5)
+
+	doc := activityprofile.ActivityDocument{
+		Activity: properties.Object{
+			ObjectType: utils.Ptr("Activity"),
+			ID:         "http://github.com/bkaraceylan/xapi-go/Test/Unit/0",
+			Definition: &properties.Definition{
+				Type:        utils.Ptr("http://github.com/bkaraceylan/xapi-go/activitytype/unit-test"),
+				Name:        &special.LanguageMap{"en-US": "Golang tests"},
+				Description: &special.LanguageMap{"en-US": "xapi-go golang client library unit tests"},
+			},
+		},
+		Document: resources.Document{
+			ID:      id,
+			Content: []byte("test"),
+		},
+	}
+
+	_, resp, err := suite.lrs.SaveActivityProfile(&doc)
+
+	assert.Nil(suite.T(), err)
+	assert.Equal(suite.T(), 204, resp.Response.StatusCode)
+
+	resp, err = suite.lrs.DeleteActivityProfile(&doc)
+	assert.Nil(suite.T(), err)
+	assert.Equal(suite.T(), 204, resp.Response.StatusCode)
 }
 
 func TestResourceTestSuite(t *testing.T) {
