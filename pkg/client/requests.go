@@ -65,9 +65,6 @@ type Response struct {
 }
 
 func (r *Response) Bind(object any) error {
-	if r.Response.StatusCode != 200 {
-		return errors.New("failed request")
-	}
 
 	bodyBytes, _ := io.ReadAll(r.Response.Body)
 
