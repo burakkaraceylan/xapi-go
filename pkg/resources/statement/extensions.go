@@ -1,4 +1,4 @@
-package properties
+package statement
 
 // Extensions are available as part of Activity Definitions, as part of a Statement's "context" property,
 // or as part of a Statement's "result" property. In each case, extensions are intended to provide a

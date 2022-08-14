@@ -10,12 +10,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/burakkaraceylan/xapi-go/pkg/resources"
 	"github.com/burakkaraceylan/xapi-go/pkg/resources/about"
-	activityprofile "github.com/burakkaraceylan/xapi-go/pkg/resources/activity_profile"
-	"github.com/burakkaraceylan/xapi-go/pkg/resources/state"
+	"github.com/burakkaraceylan/xapi-go/pkg/resources/documents"
 	"github.com/burakkaraceylan/xapi-go/pkg/resources/statement"
-	"github.com/burakkaraceylan/xapi-go/pkg/resources/statement/properties"
 )
 
 // RemoteLRS represents a connection to an LRS
@@ -77,7 +74,7 @@ func (lrs *RemoteLRS) SaveStatement(statement statement.Statement) ([]string, *R
 	b, err := json.Marshal(statement)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to marshal: %w", err)
 	}
 
 	str := string(b)
@@ -86,13 +83,13 @@ func (lrs *RemoteLRS) SaveStatement(statement statement.Statement) ([]string, *R
 	req, err := lrs_req.Init()
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to init request: %w", err)
 	}
 
 	resp, err := lrs.sendRequest(req)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to send request: %w", err)
 	}
 
 	// If we used PUT we don't expect a return value
@@ -106,13 +103,13 @@ func (lrs *RemoteLRS) SaveStatement(statement statement.Statement) ([]string, *R
 	b, err = io.ReadAll(resp.Response.Body)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
 	err = json.Unmarshal(b, &idList)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to unmarshal: %w", err)
 	}
 
 	return idList, resp, nil
@@ -126,7 +123,7 @@ func (lrs *RemoteLRS) SaveStatements(statements []statement.Statement) ([]string
 	b, err := json.Marshal(statements)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("marshaling failed: %w", err)
 	}
 
 	str := string(b)
@@ -135,13 +132,13 @@ func (lrs *RemoteLRS) SaveStatements(statements []statement.Statement) ([]string
 	req, err := lrs_req.Init()
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to init request: %w", err)
 	}
 
 	resp, err := lrs.sendRequest(req)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to send request: %w", err)
 	}
 
 	var idList []string
@@ -149,13 +146,13 @@ func (lrs *RemoteLRS) SaveStatements(statements []statement.Statement) ([]string
 	b, err = io.ReadAll(resp.Response.Body)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
 	err = json.Unmarshal(b, &idList)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to unmarshal: %w", err)
 	}
 
 	return idList, resp, nil
@@ -169,19 +166,23 @@ func (lrs *RemoteLRS) GetStatement(id string) (*statement.Statement, *Response, 
 	req, err := lrs_request.Init()
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to init request: %w", err)
 	}
 
 	lrs_resp, err := lrs.sendRequest(req)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to send request: %w", err)
+	}
+
+	if lrs_resp.Response.StatusCode != 200 {
+		return nil, lrs_resp, nil
 	}
 
 	statement := &statement.Statement{}
 
 	if err := lrs_resp.Bind(statement); err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to bind response: %w", err)
 	}
 
 	return statement, lrs_resp, nil
@@ -195,19 +196,23 @@ func (lrs *RemoteLRS) GetVoidedStatement(id string) (*statement.Statement, *Resp
 	req, err := lrs_request.Init()
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to init request: %w", err)
 	}
 
 	lrs_resp, err := lrs.sendRequest(req)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to send request: %w", err)
+	}
+
+	if lrs_resp.Response.StatusCode != 200 {
+		return nil, lrs_resp, nil
 	}
 
 	statement := &statement.Statement{}
 
 	if err := lrs_resp.Bind(statement); err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to bind response: %w", err)
 	}
 
 	return statement, lrs_resp, nil
@@ -217,9 +222,9 @@ func (lrs *RemoteLRS) GetVoidedStatement(id string) (*statement.Statement, *Resp
 type StatementQueryParams struct {
 	StatementID       *string
 	VoidedStatementId *string
-	Agent             *properties.Actor
-	Verb              *properties.Verb
-	Activity          *properties.Object
+	Agent             *statement.Agent
+	Verb              *statement.Verb
+	Activity          *statement.Activity
 	Registeration     *string
 	RelatedActivities *bool
 	RelatedAgents     *bool
@@ -302,31 +307,31 @@ func (q *StatementQueryParams) Map() map[string]string {
 }
 
 // QueryStatements is used to query the statements on the LRS
-func (lrs *RemoteLRS) QueryStatements(params *StatementQueryParams) (*statement.StatementResult, *Response, error) {
+func (lrs *RemoteLRS) QueryStatements(params ...*StatementQueryParams) (*statement.StatementResult, *Response, error) {
 
 	var query_params map[string]string
 
-	if params != nil {
-		query_params = params.Map()
+	if len(params) > 0 {
+		query_params = params[0].Map()
 	}
 
 	lrs_request := lrs.newRequest("GET", "statements", nil, &query_params, nil)
 	req, err := lrs_request.Init()
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to init request: %w", err)
 	}
 
 	lrs_resp, err := lrs.sendRequest(req)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to send request: %w", err)
 	}
 
 	result := &statement.StatementResult{}
 
 	if err := lrs_resp.Bind(result); err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to bin response: %w", err)
 	}
 
 	return result, lrs_resp, nil
@@ -339,19 +344,19 @@ func (lrs *RemoteLRS) About() (*about.About, error) {
 	req, err := lrs_request.Init()
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to init request: %w", err)
 	}
 
 	lrs_resp, err := lrs.sendRequest(req)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to send request: %w", err)
 	}
 
 	about := &about.About{}
 
 	if err := lrs_resp.Bind(about); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to bind response %w", err)
 	}
 
 	return about, nil
@@ -359,57 +364,54 @@ func (lrs *RemoteLRS) About() (*about.About, error) {
 }
 
 // GetStateIds request parameters
-type GetStateIdsQueryParams struct {
-	Activity     properties.Object
-	Agent        properties.Actor
+type GetStateIdsOptionalParams struct {
 	Registration *string
 	Since        *time.Time
 }
 
-func (q *GetStateIdsQueryParams) Map() map[string]string {
-	params := make(map[string]string)
-
-	params["activityId"] = q.Activity.ID
-
-	b, err := json.Marshal(q.Agent)
-
-	if err == nil {
-		params["agent"] = string(b)
-	}
-
-	params["agent"] = string(b)
-
-	if q.Registration != nil {
-		params["registration"] = *q.Registration
-	}
-
-	if q.Since != nil {
-		params["since"] = q.Since.Format(time.RFC3339Nano)
-	}
-
-	return params
-}
-
 // GetStateIds is used to fetch the state ids
-func (lrs *RemoteLRS) GetStateIds(params *GetStateIdsQueryParams) ([]string, *Response, error) {
+func (lrs *RemoteLRS) GetStateIds(activity statement.Activity, agent statement.Agent, params ...*GetStateIdsOptionalParams) ([]string, *Response, error) {
+	var opt *GetStateIdsOptionalParams
 
-	var query_params map[string]string
+	if len(params) == 1 {
+		if params[0] == nil {
+			return nil, nil, errors.New("optional parameters can't be a nil pointer")
+		}
 
-	if params != nil {
-		query_params = params.Map()
+		opt = params[0]
+
+	}
+
+	if len(params) > 1 {
+		return nil, nil, errors.New("too many arguments")
+	}
+
+	query_params := make(map[string]string)
+
+	query_params["activityId"] = activity.ID
+	query_params["agent"] = agent.ToJSON()
+
+	if opt != nil {
+		if opt.Registration != nil {
+			query_params["registration"] = *opt.Registration
+		}
+
+		if opt.Since != nil {
+			query_params["since"] = opt.Since.Format(time.RFC3339Nano)
+		}
 	}
 
 	lrs_request := lrs.newRequest("GET", "activities/state", nil, &query_params, nil)
 	req, err := lrs_request.Init()
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to init request: %w", err)
 	}
 
 	lrs_resp, err := lrs.sendRequest(req)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to send request: %w", err)
 	}
 
 	if lrs_resp.Response.StatusCode != 200 {
@@ -419,48 +421,44 @@ func (lrs *RemoteLRS) GetStateIds(params *GetStateIdsQueryParams) ([]string, *Re
 	var idList []string
 
 	if err := lrs_resp.Bind(&idList); err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to bind response: %w", err)
 	}
 
 	return idList, lrs_resp, nil
 }
 
 // GetState request parameters
-type GetStateQueryParams struct {
-	Activity     properties.Object
-	Agent        properties.Actor
+type GetStateOptionalParams struct {
 	Registration *string
-	StateID      string
-}
-
-func (q *GetStateQueryParams) Map() map[string]string {
-	params := make(map[string]string)
-
-	params["activityId"] = q.Activity.ID
-
-	b, err := json.Marshal(q.Agent)
-
-	if err == nil {
-		params["agent"] = string(b)
-	}
-
-	params["agent"] = string(b)
-
-	if q.Registration != nil {
-		params["registration"] = *q.Registration
-	}
-
-	params["stateId"] = q.StateID
-
-	return params
 }
 
 // GetState is used to fetch a state
-func (lrs *RemoteLRS) GetState(params *GetStateQueryParams) (*state.StateDocument, *Response, error) {
-	var query_params map[string]string
+func (lrs *RemoteLRS) GetState(activity statement.Activity, agent statement.Agent, stateID string, params ...*GetStateOptionalParams) (*documents.StateDocument, *Response, error) {
+	var opt *GetStateOptionalParams
 
-	if params != nil {
-		query_params = params.Map()
+	if len(params) == 1 {
+		if params[0] == nil {
+			return nil, nil, errors.New("optional parameters can't be a nil pointer")
+		}
+
+		opt = params[0]
+
+	}
+
+	if len(params) > 1 {
+		return nil, nil, errors.New("too many arguments")
+	}
+
+	query_params := make(map[string]string)
+
+	query_params["activityId"] = activity.ID
+	query_params["stateId"] = stateID
+	query_params["agent"] = agent.ToJSON()
+
+	if opt != nil {
+		if opt.Registration != nil {
+			query_params["registration"] = *opt.Registration
+		}
 	}
 
 	if len(query_params["stateId"]) == 0 {
@@ -471,13 +469,13 @@ func (lrs *RemoteLRS) GetState(params *GetStateQueryParams) (*state.StateDocumen
 	req, err := lrs_request.Init()
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to init request: %w", err)
 	}
 
 	lrs_resp, err := lrs.sendRequest(req)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to send request: %w", err)
 	}
 
 	if lrs_resp.Response.StatusCode != 200 {
@@ -487,27 +485,29 @@ func (lrs *RemoteLRS) GetState(params *GetStateQueryParams) (*state.StateDocumen
 	content, err := io.ReadAll(lrs_resp.Response.Body)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	doc := state.StateDocument{
-		Agent:    params.Agent,
-		Activity: params.Activity,
-		Document: resources.Document{
-			ID:      params.StateID,
+	doc := documents.StateDocument{
+		Agent:    agent,
+		Activity: activity,
+		Document: documents.Document{
+			ID:      stateID,
 			Content: content,
 		},
 	}
 
-	if params.Registration != nil {
-		doc.Registration = params.Registration
+	if opt != nil {
+		if opt.Registration != nil {
+			query_params["registration"] = *opt.Registration
+		}
 	}
 
 	if ts := lrs_resp.Response.Header.Get("last-modified"); len(ts) > 0 {
 		t, err := time.Parse("Mon, 2 Jan 2006 15:04:05 GMT", ts)
 
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, fmt.Errorf("failed to parse time: %w", err)
 		}
 
 		doc.Timestamp = t
@@ -525,7 +525,10 @@ func (lrs *RemoteLRS) GetState(params *GetStateQueryParams) (*state.StateDocumen
 }
 
 // SaveState is used to save a state document to the LRS
-func (lrs *RemoteLRS) SaveState(state *state.StateDocument) (*state.StateDocument, *Response, error) {
+func (lrs *RemoteLRS) SaveState(state *documents.StateDocument) (*documents.StateDocument, *Response, error) {
+	if state == nil {
+		return nil, nil, errors.New("argument can't be nil")
+	}
 
 	content := string(state.Content)
 
@@ -541,40 +544,40 @@ func (lrs *RemoteLRS) SaveState(state *state.StateDocument) (*state.StateDocumen
 		headers["If-Match"] = state.Etag
 	}
 
-	params := GetStateQueryParams{
-		Activity: state.Activity,
-		StateID:  state.ID,
-		Agent:    state.Agent,
-	}
+	query_params := make(map[string]string)
+	query_params["activityId"] = state.Activity.ID
+	query_params["stateId"] = state.ID
+	query_params["agent"] = state.Agent.ToJSON()
 
-	pmap := params.Map()
-
-	lrs_request := lrs.newRequest("PUT", "activities/state", &headers, &pmap, &content)
+	lrs_request := lrs.newRequest("PUT", "activities/state", &headers, &query_params, &content)
 
 	req, err := lrs_request.Init()
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to init request: %w", err)
 	}
 
 	lrs_resp, err := lrs.sendRequest(req)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to send request: %w", err)
 	}
 
 	return state, lrs_resp, nil
 }
 
 // DeleteState is used to delete a state (if stateId is provided) or all states related to agent/activity/registration
-func (lrs *RemoteLRS) DeleteState(state *state.StateDocument) (*Response, error) {
+func (lrs *RemoteLRS) DeleteState(state *documents.StateDocument) (*Response, error) {
+	if state == nil {
+		return nil, errors.New("argument can't be nil")
+	}
 
 	params := make(map[string]string)
 
 	b, err := json.Marshal(state.Agent)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to marshal: %w", err)
 	}
 
 	params["activityId"] = state.Activity.ID
@@ -605,49 +608,60 @@ func (lrs *RemoteLRS) DeleteState(state *state.StateDocument) (*Response, error)
 	req, err := lrs_request.Init()
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to init request: %w", err)
 	}
 
 	lrs_resp, err := lrs.sendRequest(req)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to send request: %w", err)
 	}
 
 	return lrs_resp, nil
 }
 
-type GetActivityProfilesParams struct {
-	Activity properties.Object
-	Since    *time.Time
+type GetActivityProfileIdsOptionalParams struct {
+	Since *time.Time
 }
 
 // GetActivityProfileIds is used to fetch the activity profile ids
-func (lrs *RemoteLRS) GetActivityProfileIds(params *GetActivityProfilesParams) ([]string, *Response, error) {
+func (lrs *RemoteLRS) GetActivityProfileIds(activity statement.Activity, params ...*GetActivityProfileIdsOptionalParams) ([]string, *Response, error) {
+	var opt *GetActivityProfileIdsOptionalParams
 
-	if *params.Activity.ObjectType != "Activity" {
-		return nil, nil, errors.New("must be an activity")
+	if len(params) == 1 {
+		if params[0] == nil {
+			return nil, nil, errors.New("optional parameters can't be a nil pointer")
+		}
+
+		opt = params[0]
+
+	}
+
+	if len(params) > 1 {
+		return nil, nil, errors.New("too many arguments")
 	}
 
 	query_params := make(map[string]string)
 
-	query_params["activityId"] = params.Activity.ID
+	query_params["activityId"] = activity.ID
 
-	if params.Since != nil {
-		query_params["since"] = params.Since.Format(time.RFC3339Nano)
+	if opt != nil {
+		if opt.Since != nil {
+			query_params["since"] = opt.Since.Format(time.RFC3339Nano)
+		}
 	}
 
 	lrs_request := lrs.newRequest("GET", "activities/profile", nil, &query_params, nil)
 	req, err := lrs_request.Init()
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to init request: %w", err)
 	}
 
 	lrs_resp, err := lrs.sendRequest(req)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to send request: %w", err)
 	}
 
 	if lrs_resp.Response.StatusCode != 200 {
@@ -657,36 +671,31 @@ func (lrs *RemoteLRS) GetActivityProfileIds(params *GetActivityProfilesParams) (
 	var idList []string
 
 	if err := lrs_resp.Bind(&idList); err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to bind response: %w", err)
 	}
 
 	return idList, lrs_resp, nil
 }
 
-type GetActivityProfileParams struct {
-	Activity  properties.Object
-	ProfileID string
-}
-
 // GetActivityProfile is used to fetch an actity profile
-func (lrs *RemoteLRS) GetActivityProfile(params *GetActivityProfileParams) (*activityprofile.ActivityDocument, *Response, error) {
+func (lrs *RemoteLRS) GetActivityProfile(activity statement.Activity, profileID string) (*documents.ActivityDocument, *Response, error) {
 
 	query_params := make(map[string]string)
 
-	query_params["profileId"] = params.ProfileID
-	query_params["activityId"] = params.Activity.ID
+	query_params["profileId"] = profileID
+	query_params["activityId"] = activity.ID
 
 	lrs_request := lrs.newRequest("GET", "activities/profile", nil, &query_params, nil)
 	req, err := lrs_request.Init()
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to init request: %w", err)
 	}
 
 	lrs_resp, err := lrs.sendRequest(req)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to send request: %w", err)
 	}
 
 	if lrs_resp.Response.StatusCode != 200 {
@@ -696,13 +705,13 @@ func (lrs *RemoteLRS) GetActivityProfile(params *GetActivityProfileParams) (*act
 	content, err := io.ReadAll(lrs_resp.Response.Body)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to read body: %w", err)
 	}
 
-	doc := activityprofile.ActivityDocument{
-		Activity: params.Activity,
-		Document: resources.Document{
-			ID:      params.ProfileID,
+	doc := documents.ActivityDocument{
+		Activity: activity,
+		Document: documents.Document{
+			ID:      profileID,
 			Content: content,
 		},
 	}
@@ -711,7 +720,7 @@ func (lrs *RemoteLRS) GetActivityProfile(params *GetActivityProfileParams) (*act
 		t, err := time.Parse("Mon, 2 Jan 2006 15:04:05 GMT", ts)
 
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, fmt.Errorf("failed to parse time: %w", err)
 		}
 
 		doc.Timestamp = t
@@ -729,7 +738,11 @@ func (lrs *RemoteLRS) GetActivityProfile(params *GetActivityProfileParams) (*act
 }
 
 // SaveActivityProfile is used to save an activity profile document to the LRS
-func (lrs *RemoteLRS) SaveActivityProfile(profile *activityprofile.ActivityDocument) (*activityprofile.ActivityDocument, *Response, error) {
+func (lrs *RemoteLRS) SaveActivityProfile(profile *documents.ActivityDocument) (*documents.ActivityDocument, *Response, error) {
+
+	if profile == nil {
+		return nil, nil, errors.New("argument can't be nil")
+	}
 
 	content := string(profile.Content)
 
@@ -754,20 +767,24 @@ func (lrs *RemoteLRS) SaveActivityProfile(profile *activityprofile.ActivityDocum
 	req, err := lrs_request.Init()
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to init request: %w", err)
 	}
 
 	lrs_resp, err := lrs.sendRequest(req)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to send request: %w", err)
 	}
 
 	return profile, lrs_resp, nil
 }
 
 // DeleteActivityProfile is used to delete a an activty profile
-func (lrs *RemoteLRS) DeleteActivityProfile(profile *activityprofile.ActivityDocument) (*Response, error) {
+func (lrs *RemoteLRS) DeleteActivityProfile(profile *documents.ActivityDocument) (*Response, error) {
+
+	if profile == nil {
+		return nil, errors.New("argument can't be nil")
+	}
 
 	params := make(map[string]string)
 
@@ -785,13 +802,221 @@ func (lrs *RemoteLRS) DeleteActivityProfile(profile *activityprofile.ActivityDoc
 	req, err := lrs_request.Init()
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to init request: %w", err)
 	}
 
 	lrs_resp, err := lrs.sendRequest(req)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to send request: %w", err)
+	}
+
+	return lrs_resp, nil
+}
+
+type GetAgentProfileIdsoptionalParams struct {
+	Agent statement.Agent
+	Since *time.Time
+}
+
+// GetAgentProfileIds is used to fetch the agent profile ids
+func (lrs *RemoteLRS) GetAgentProfileIds(agent statement.Agent, params ...*GetAgentProfileIdsoptionalParams) ([]string, *Response, error) {
+	var opt *GetAgentProfileIdsoptionalParams
+
+	if len(params) == 1 {
+		if params[0] == nil {
+			return nil, nil, errors.New("optional parameters can't be a nil pointer")
+		}
+
+		opt = params[0]
+
+	}
+
+	if len(params) > 1 {
+		return nil, nil, errors.New("too many arguments")
+	}
+
+	query_params := make(map[string]string)
+
+	query_params["agent"] = agent.ToJSON()
+
+	if opt != nil {
+		if opt.Since != nil {
+			query_params["since"] = opt.Since.Format(time.RFC3339Nano)
+		}
+	}
+
+	lrs_request := lrs.newRequest("GET", "agents/profile", nil, &query_params, nil)
+	req, err := lrs_request.Init()
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to init request: %w", err)
+	}
+
+	lrs_resp, err := lrs.sendRequest(req)
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to send request: %w", err)
+	}
+
+	if lrs_resp.Response.StatusCode != 200 {
+		return nil, lrs_resp, nil
+	}
+
+	var idList []string
+
+	if err := lrs_resp.Bind(&idList); err != nil {
+		return nil, nil, fmt.Errorf("failed to bind response: %w", err)
+	}
+
+	return idList, lrs_resp, nil
+}
+
+// GetAgentProfile is used to fetch an actity profile
+func (lrs *RemoteLRS) GetAgentProfile(agent statement.Agent, profileID string) (*documents.AgentDocument, *Response, error) {
+
+	query_params := make(map[string]string)
+
+	query_params["profileId"] = profileID
+	query_params["agent"] = agent.ToJSON()
+
+	lrs_request := lrs.newRequest("GET", "agents/profile", nil, &query_params, nil)
+	req, err := lrs_request.Init()
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to init request: %w", err)
+	}
+
+	lrs_resp, err := lrs.sendRequest(req)
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to send request: %w", err)
+	}
+
+	if lrs_resp.Response.StatusCode != 200 {
+		return nil, lrs_resp, nil
+	}
+
+	content, err := io.ReadAll(lrs_resp.Response.Body)
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to read body: %w", err)
+	}
+
+	doc := documents.AgentDocument{
+		Agent: agent,
+		Document: documents.Document{
+			ID:      profileID,
+			Content: content,
+		},
+	}
+
+	if ts := lrs_resp.Response.Header.Get("last-modified"); len(ts) > 0 {
+		t, err := time.Parse("Mon, 2 Jan 2006 15:04:05 GMT", ts)
+
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to parse time: %w", err)
+		}
+
+		doc.Timestamp = t
+	}
+
+	if ct := lrs_resp.Response.Header.Get("content-type"); len(ct) > 0 {
+		doc.ContentType = ct
+	}
+
+	if etag := lrs_resp.Response.Header.Get("etag"); len(etag) > 0 {
+		doc.Etag = etag
+	}
+
+	return &doc, lrs_resp, nil
+}
+
+// SaveAgentProfile is used to save an agent profile document to the LRS
+func (lrs *RemoteLRS) SaveAgentProfile(profile *documents.AgentDocument) (*documents.AgentDocument, *Response, error) {
+
+	if profile == nil {
+		return nil, nil, errors.New("argument can't be nil")
+	}
+
+	content := string(profile.Content)
+
+	headers := make(map[string]string)
+
+	if len(profile.ContentType) > 0 {
+		headers["Content-Type"] = profile.ContentType
+	} else {
+		headers["Content-Type"] = "application/octet-stream"
+	}
+
+	if len(profile.Etag) > 0 {
+		headers["If-Match"] = profile.Etag
+	}
+
+	params := make(map[string]string)
+
+	b, err := json.Marshal(profile.Agent)
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to marshal %w", err)
+	}
+
+	params["agent"] = string(b)
+	params["profileId"] = profile.ID
+
+	lrs_request := lrs.newRequest("PUT", "agents/profile", &headers, &params, &content)
+
+	req, err := lrs_request.Init()
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to init request: %w", err)
+	}
+
+	lrs_resp, err := lrs.sendRequest(req)
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to send request: %w", err)
+	}
+
+	return profile, lrs_resp, nil
+}
+
+// DeleteAgentProfile is used to delete a an activty profile
+func (lrs *RemoteLRS) DeleteAgentProfile(profile *documents.AgentDocument) (*Response, error) {
+
+	if profile == nil {
+		return nil, errors.New("argument can't be nil")
+	}
+
+	params := make(map[string]string)
+
+	b, err := json.Marshal(profile.Agent)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal %w", err)
+	}
+
+	params["agent"] = string(b)
+	params["profileId"] = profile.ID
+
+	headers := make(map[string]string)
+
+	if len(profile.Etag) > 0 {
+		headers["If-Match"] = profile.Etag
+	}
+
+	lrs_request := lrs.newRequest("DELETE", "agents/profile", &headers, &params, nil)
+
+	req, err := lrs_request.Init()
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to init request: %w", err)
+	}
+
+	lrs_resp, err := lrs.sendRequest(req)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to send request: %w", err)
 	}
 
 	return lrs_resp, nil

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/burakkaraceylan/xapi-go/pkg/resources/about"
-	"github.com/burakkaraceylan/xapi-go/pkg/resources/statement/properties"
+	"github.com/burakkaraceylan/xapi-go/pkg/resources/statement"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
@@ -17,13 +17,13 @@ func (suite *AboutTestResource) TestEmpty() {
 	a := about.About{}
 
 	assert.IsType(suite.T(), []string{}, a.Version)
-	assert.IsType(suite.T(), &properties.Extensions{}, a.Extensions)
+	assert.IsType(suite.T(), &statement.Extensions{}, a.Extensions)
 }
 
 func (suite *AboutTestResource) TestInitalized() {
 	a := about.About{
 		Version: []string{"0.0.9", "1.0.0"},
-		Extensions: &properties.Extensions{
+		Extensions: &statement.Extensions{
 			"test-extension-1": "https://github.com/bkaraceylan/xapi-go/ext/1",
 			"test-extension-2": "https://github.com/bkaraceylan/xapi-go/ext/2",
 		},

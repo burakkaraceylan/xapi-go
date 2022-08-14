@@ -77,7 +77,7 @@ func (suite *RequestsTestSuite) TestResponse() {
 		Response: resp,
 	}
 
-	expected := fmt.Sprintf("Code: %d\nURL: %s\n", resp.StatusCode, req2.URL)
+	expected := fmt.Sprintf("CODE: %d\nURL: %s\n", resp.StatusCode, req2.URL)
 	assert.Equal(suite.T(), response.String(), expected)
 }
 

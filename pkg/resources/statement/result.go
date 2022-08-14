@@ -1,4 +1,4 @@
-package properties
+package statement
 
 // An optional property that represents a measured outcome related to the Statement in which it is included.
 // https://github.com/adlnet/xAPI-Spec/blob/master/xAPI-Data.md#245-result

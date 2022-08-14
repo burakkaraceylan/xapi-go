@@ -12,7 +12,7 @@ The Experience API (or xAPI) is a new specification for learning technology that
 
 ## Installation
 	go get github.com/burakkaraceylan/xapi-go@latest
-## Module Usage
+## Basic Usage
 	lrs, err := client.NewRemoteLRS(
 		"https://cloud.scorm.com/ScormEngineInterface/TCAPI/public/",
 		"1.0.0",
@@ -29,13 +29,8 @@ The Experience API (or xAPI) is a new specification for learning technology that
 		panic(err)
 	}
 
-	pretty, err := statement.ToJson(true)
-
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println(pretty)
+	str, _ := utils.ToJson(stmt, true)
+	fmt.Println(str)
 
 ## CLI Usage
 	Usage:
@@ -61,9 +56,14 @@ The Experience API (or xAPI) is a new specification for learning technology that
 ### Module
 - [x] About Resource
 - [X] Statement Resource
-- [ ] State Resource
-- [ ] Documents Resource
-- [ ] Agents Resource
-- [ ] Activities Resource
-- [ ] Agent Profile Resource
-- [ ] Activity Profile Resource
+- [X] State Resource
+- [X] Documents Resource
+- [X] Agents Resource
+- [X] Activities Resource
+- [X] Agent Profile Resource
+- [X] Activity Profile Resource
+
+### Improvements
+- [ ] Better error handling
+- [ ] Better document
+- [ ] More tests
