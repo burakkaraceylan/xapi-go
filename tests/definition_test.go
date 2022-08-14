@@ -45,8 +45,8 @@ func (suite *DefinitionTestSuite) TestInitialized() {
 		CorrectResponsesPattern: crpattern,
 	}
 
-	d.AddChoice(*statement.NewInteractionComponent("choice1", &statement.LanguageMap{"en-US": "test"}))
-	d.AddChoice(*statement.NewInteractionComponent("choice2", &statement.LanguageMap{"en-US": "test"}))
+	_ = d.AddChoice(*statement.NewInteractionComponent("choice1", &statement.LanguageMap{"en-US": "test"}))
+	_ = d.AddChoice(*statement.NewInteractionComponent("choice2", &statement.LanguageMap{"en-US": "test"}))
 
 	assert.Equal(suite.T(), name, *d.Name)
 	assert.Equal(suite.T(), atype, *d.Type)
