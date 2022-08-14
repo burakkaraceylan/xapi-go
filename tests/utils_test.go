@@ -4,8 +4,6 @@ import (
 	"testing"
 
 	"github.com/burakkaraceylan/xapi-go/pkg/resources/statement"
-	"github.com/burakkaraceylan/xapi-go/pkg/resources/statement/properties"
-	"github.com/burakkaraceylan/xapi-go/pkg/resources/statement/special"
 	"github.com/burakkaraceylan/xapi-go/pkg/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -16,77 +14,64 @@ type UtilsTestSuite struct {
 }
 
 func (suite *UtilsTestSuite) TestToJSON() {
-	actor := properties.Actor{
+	actor := statement.Agent{
 		ObjectType: "Agent",
 		Name:       utils.Ptr("Foo Bar"),
 		Mbox:       utils.Ptr("mailto:foo@bar.com"),
 	}
 
-	verb := properties.Verb{
+	verb := statement.Verb{
 		ID:      "http://adlnet.gov/expapi/verbs/initialized",
-		Display: special.LanguageMap{"en-US": "initialized"},
+		Display: statement.LanguageMap{"en-US": "initialized"},
 	}
 
-	object := properties.Object{
-		ID:         "http://id.tincanapi.com/activity/tincan-prototypes/tetris",
-		ObjectType: utils.Ptr("Activity"),
-		Definition: &properties.Definition{
-			Name:        &special.LanguageMap{"en-US": "Js Tetris - Tin Can Prototype"},
-			Description: &special.LanguageMap{"en-US": "A game of tetris."},
-			Type:        utils.Ptr("http://activitystrea.ms/schema/1.0/game"),
-		},
+	statement.NewActivityWithDefiniton("http://id.tincanapi.com/activity/tincan-prototypes/tetris", &statement.ActivityDefinition{
+		Name:        &statement.LanguageMap{"en-US": "Js Tetris - Tin Can Prototype"},
+		Description: &statement.LanguageMap{"en-US": "A game of tetris."},
+		Type:        utils.Ptr("http://activitystrea.ms/schema/1.0/game"),
+	})
+
+	object := statement.NewActivityWithDefiniton("http://id.tincanapi.com/activity/tincan-prototypes/tetris", &statement.ActivityDefinition{
+		Name:        &statement.LanguageMap{"en-US": "Js Tetris - Tin Can Prototype"},
+		Description: &statement.LanguageMap{"en-US": "A game of tetris."},
+		Type:        utils.Ptr("http://activitystrea.ms/schema/1.0/game"),
+	})
+
+	cat1 := statement.NewActivityWithDefiniton("http://id.tincanapi.com/recipe/tincan-prototypes/tetris/1", &statement.ActivityDefinition{
+		Type: utils.Ptr("http://id.tincanapi.com/activitytype/recipe"),
+	})
+
+	cat2 := statement.NewActivityWithDefiniton("http://id.tincanapi.com/activity/tincan-prototypes/tetris-template", &statement.ActivityDefinition{
+		Type: utils.Ptr("http://id.tincanapi.com/activitytype/source"),
+	})
+
+	grp1 := statement.NewActivity("http://id.tincanapi.com/activity/tincan-prototypes")
+
+	grp2 := statement.NewActivity("http://id.tincanapi.com/activity/tincan-prototypes/tetris")
+
+	activities := statement.NewContextActivityList()
+	activities.Append("Category", *cat1)
+	activities.Append("Category", *cat2)
+	activities.Append("Grouping", *grp1)
+	activities.Append("Grouping", *grp2)
+
+	context := statement.Context{
+		Registration:      utils.Ptr("e168d6a3-46b2-4233-82e7-66b73a179727"),
+		ContextActivities: activities,
 	}
 
-	cat1 := properties.Object{
-		ID:         "http://id.tincanapi.com/recipe/tincan-prototypes/tetris/1",
-		ObjectType: utils.Ptr("Activity"),
-		Definition: &properties.Definition{
-			Type: utils.Ptr("http://id.tincanapi.com/activitytype/recipe"),
-		},
-	}
+	authority := *statement.NewAnonymousAgentWithAccount(&statement.Account{
+		Name:     "anonymous",
+		HomePage: "http://cloud.scorm.com",
+	})
 
-	cat2 := properties.Object{
-		ID:         "http://id.tincanapi.com/activity/tincan-prototypes/tetris-template",
-		ObjectType: utils.Ptr("Activity"),
-		Definition: &properties.Definition{
-			Type: utils.Ptr("http://id.tincanapi.com/activitytype/source"),
-		},
-	}
-
-	grp1 := properties.Object{
-		ID:         "http://id.tincanapi.com/activity/tincan-prototypes",
-		ObjectType: utils.Ptr("Activity"),
-	}
-
-	grp2 := properties.Object{
-		ID:         "http://id.tincanapi.com/activity/tincan-prototypes/tetris",
-		ObjectType: utils.Ptr("Activity"),
-	}
-
-	context := properties.Context{
-		Registration: utils.Ptr("e168d6a3-46b2-4233-82e7-66b73a179727"),
-		ContextActivities: &properties.ContextActivities{
-			Category: &[]properties.Object{cat1, cat2},
-			Grouping: &[]properties.Object{grp1, grp2},
-		},
-	}
-
-	authority := properties.Actor{
-		ObjectType: "Agent",
-		Account: &properties.Account{
-			Name:     "anonymous",
-			HomePage: "http://cloud.scorm.com",
-		},
-	}
-
-	stmt1 := statement.Statement{
-		Actor:     actor,
-		Verb:      verb,
+	opts := statement.StatementOptions{
 		Context:   &context,
 		Version:   utils.Ptr("1.0.0"),
 		Authority: &authority,
-		Object:    object,
 	}
+
+	stmt1 := *statement.NewStatement(actor, verb, object, &opts)
 
 	s, err := utils.ToJson(stmt1, false)
 

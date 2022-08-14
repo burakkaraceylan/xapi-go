@@ -76,7 +76,8 @@ func (r *Response) Bind(object any) error {
 }
 
 func (r *Response) String() string {
-	str := fmt.Sprintf("Code: %d\n", r.Status)
+	str := fmt.Sprintf("CODE: %d\n", r.Status)
 	str += fmt.Sprintf("URL: %s\n", r.Request.URL)
+
 	return str
 }

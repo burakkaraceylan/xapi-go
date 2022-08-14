@@ -11,37 +11,28 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type StateDocTestSuite struct {
+type ActivityProfileTestSuite struct {
 	suite.Suite
-	Agent    statement.Agent
 	Activity statement.Activity
 }
 
-func (suite *StateDocTestSuite) SetupSuite() {
-	suite.Agent = statement.Agent{
-		ObjectType: "Agent",
-		Mbox:       utils.Ptr("mailto:bkaraceylan@gmail.com"),
-	}
+func (suite *ActivityProfileTestSuite) SetupSuite() {
 
-	suite.Activity = *statement.NewActivityWithDefiniton("http://github.com/bkaraceylan/xapi-go/Test/Unit/0", &statement.ActivityDefinition{
-		Type:        utils.Ptr("http://github.com/bkaraceylan/xapi-go/activitytype/unit-test"),
-		Name:        &statement.LanguageMap{"en-US": "Golang tests"},
-		Description: &statement.LanguageMap{"en-US": "xapi-go golang client library unit tests"},
-	})
-
+	suite.Activity = *statement.NewActivityWithDefiniton(
+		"http://github.com/bkaraceylan/xapi-go/Test/Unit/0",
+		&statement.ActivityDefinition{
+			Type:        utils.Ptr("http://github.com/bkaraceylan/xapi-go/activitytype/unit-test"),
+			Name:        &statement.LanguageMap{"en-US": "Golang tests"},
+			Description: &statement.LanguageMap{"en-US": "xapi-go golang client library unit tests"},
+		},
+	)
 }
 
-func (suite *StateDocTestSuite) TestEmpty() {
-	doc := documents.StateDocument{}
+func (suite *ActivityProfileTestSuite) TestEmpty() {
+	doc := documents.ActivityDocument{}
 
-	assert.IsType(suite.T(), doc.Agent, statement.Agent{})
-	assert.IsType(suite.T(), doc.Activity, statement.Activity{})
 	assert.IsType(suite.T(), doc.Activity, statement.Activity{})
 
-	str := ""
-	strPtry := utils.Ptr(str)
-
-	assert.IsType(suite.T(), strPtry, doc.Registration)
 	assert.IsType(suite.T(), "", doc.ContentType)
 	assert.IsType(suite.T(), []byte{}, doc.Content)
 	assert.IsType(suite.T(), "", doc.Etag)
@@ -49,9 +40,8 @@ func (suite *StateDocTestSuite) TestEmpty() {
 	assert.IsType(suite.T(), time.Time{}, doc.Timestamp)
 }
 
-func (suite *StateDocTestSuite) TestInitalized() {
+func (suite *ActivityProfileTestSuite) TestInitalized() {
 	doc := documents.StateDocument{
-		Agent:    suite.Agent,
 		Activity: suite.Activity,
 		Document: documents.Document{
 			ID:          "test",
@@ -62,7 +52,6 @@ func (suite *StateDocTestSuite) TestInitalized() {
 		},
 	}
 
-	assert.Equal(suite.T(), suite.Agent, doc.Agent)
 	assert.Equal(suite.T(), suite.Activity, doc.Activity)
 	assert.Equal(suite.T(), "test", doc.ID)
 	assert.Equal(suite.T(), "test", doc.ContentType)
@@ -71,6 +60,6 @@ func (suite *StateDocTestSuite) TestInitalized() {
 	assert.Equal(suite.T(), time.Time{}, doc.Timestamp)
 }
 
-func TestStateDocTestSuite(t *testing.T) {
-	suite.Run(t, new(StateDocTestSuite))
+func TestActivityProfileTestSuite(t *testing.T) {
+	suite.Run(t, new(ActivityProfileTestSuite))
 }
