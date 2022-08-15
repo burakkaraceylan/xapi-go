@@ -7,6 +7,7 @@ type Verb struct {
 	Display LanguageMap `json:"display" xapi:"required"`
 }
 
+// Creates a new verb
 func NewVerb(id string, display LanguageMap) *Verb {
 	return &Verb{
 		ID:      id,

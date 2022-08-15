@@ -2,6 +2,7 @@ package tests
 
 import (
 	"math/rand"
+	"os"
 	"testing"
 	"time"
 
@@ -23,11 +24,8 @@ type ResourceTestSuite struct {
 }
 
 func (suite *ResourceTestSuite) SetupSuite() {
-	//username := os.Getenv("XapiSandboxUsername")
-	//password := os.Getenv("XapiSandboxPassword")
-
-	username := "bKbNeGNaz-xbnTAHhR8"
-	password := "mA1QI0wZuaBs2HBzCQI"
+	username := os.Getenv("XapiSandboxUsername")
+	password := os.Getenv("XapiSandboxPassword")
 
 	if len(username) == 0 {
 		panic("Sandbox username not present in environment variables")

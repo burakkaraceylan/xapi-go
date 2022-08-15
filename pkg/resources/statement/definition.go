@@ -18,6 +18,7 @@ type ActivityDefinition struct {
 	Steps                   []InteractionComponent `json:"steps,omitempty" xApi:"optional"`
 }
 
+// Adds a choice interaction component to the activity definition
 func (ad *ActivityDefinition) AddChoice(component InteractionComponent) error {
 	if *ad.InteractionType != "choice" && *ad.InteractionType != "sequencing" {
 		return errors.New("interaction type must be choice or sequencing")
@@ -27,6 +28,7 @@ func (ad *ActivityDefinition) AddChoice(component InteractionComponent) error {
 	return nil
 }
 
+// Adds a scale interaction component to the activity definition
 func (ad *ActivityDefinition) AddScale(component InteractionComponent) error {
 	if *ad.InteractionType != "likert" {
 		return errors.New("interaction type must be likert")
@@ -36,6 +38,7 @@ func (ad *ActivityDefinition) AddScale(component InteractionComponent) error {
 	return nil
 }
 
+// Adds a matching interaction component to the activity definition
 func (ad *ActivityDefinition) AddMatching(component InteractionComponent, isTarget bool) error {
 	if *ad.InteractionType != "matching" {
 		return errors.New("interaction type must be matching")
@@ -50,6 +53,7 @@ func (ad *ActivityDefinition) AddMatching(component InteractionComponent, isTarg
 	return nil
 }
 
+// Adds a steps interaction component to the activity definition
 func (ad *ActivityDefinition) AddSteps(component InteractionComponent) error {
 	if *ad.InteractionType != "performance" {
 		return errors.New("interaction type must be performance")

@@ -15,11 +15,13 @@ type Attachment struct {
 	AttachmentOptions
 }
 
+// Attachment optional paramets
 type AttachmentOptions struct {
 	Description *LanguageMap `json:"description,omitempty" xapi:"optional"`
 	FileUrl     *string      `json:"fileUrl,omitempty" xapi:"optional"`
 }
 
+// Creates a new attachment
 func NewAttachment(usageType string, display LanguageMap, contentType string, length int64, sha2 string, params ...*AttachmentOptions) *Attachment {
 	var opt *AttachmentOptions
 
