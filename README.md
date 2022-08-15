@@ -1,4 +1,5 @@
 # XGO-API
+[![Go Reference](https://pkg.go.dev/badge/github.com/burakkaraceylan/xapi-go.svg)](https://pkg.go.dev/github.com/burakkaraceylan/xapi-go)
 [![GitHub go.mod Go version of a Go module](https://img.shields.io/github/go-mod/go-version/gomods/athens.svg)](https://github.com/gomods/athens)
 [![codecov](https://codecov.io/gh/burakkaraceylan/xapi-go/branch/main/graph/badge.svg?token=ECR4A27QDV)](https://codecov.io/gh/burakkaraceylan/xapi-go)
 [![Go Report Card](https://goreportcard.com/badge/github.com/burakkaraceylan/xapi-go)](https://goreportcard.com/report/github.com/burakkaraceylan/xapi-go)
