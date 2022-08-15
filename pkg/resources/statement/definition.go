@@ -16,6 +16,7 @@ type ActivityDefinition struct {
 	Source                  []InteractionComponent `json:"source,omitempty" xApi:"optional"`
 	Target                  []InteractionComponent `json:"target,omitempty" xApi:"optional"`
 	Steps                   []InteractionComponent `json:"steps,omitempty" xApi:"optional"`
+	Extensions              *Extensions            `json:"extensions,omitempty" xApi:"optional"`
 }
 
 func (ad *ActivityDefinition) AddChoice(component InteractionComponent) error {

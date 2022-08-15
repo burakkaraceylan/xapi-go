@@ -26,6 +26,7 @@ func (suite *DefinitionTestSuite) TestEmpty() {
 	assert.Nil(suite.T(), d.Steps)
 	assert.Nil(suite.T(), d.Target)
 	assert.Nil(suite.T(), d.Type)
+	assert.Nil(suite.T(), d.Extensions)
 }
 
 func (suite *DefinitionTestSuite) TestInitialized() {
@@ -35,6 +36,7 @@ func (suite *DefinitionTestSuite) TestInitialized() {
 	minfo := "test"
 	itype := "choice"
 	crpattern := []string{"test", "test"}
+	extensions := statement.Extensions{"test": "test"}
 
 	d := statement.ActivityDefinition{
 		Name:                    &name,
@@ -43,6 +45,7 @@ func (suite *DefinitionTestSuite) TestInitialized() {
 		MoreInfo:                &minfo,
 		InteractionType:         &itype,
 		CorrectResponsesPattern: crpattern,
+		Extensions:              &extensions,
 	}
 
 	_ = d.AddChoice(*statement.NewInteractionComponent("choice1", &statement.LanguageMap{"en-US": "test"}))
@@ -54,6 +57,7 @@ func (suite *DefinitionTestSuite) TestInitialized() {
 	assert.Equal(suite.T(), minfo, *d.MoreInfo)
 	assert.Equal(suite.T(), itype, *d.InteractionType)
 	assert.Equal(suite.T(), crpattern, d.CorrectResponsesPattern)
+	assert.Equal(suite.T(), extensions, *d.Extensions)
 
 	assert.Equal(suite.T(), 2, len(d.Choices))
 	assert.Nil(suite.T(), d.Scale)
