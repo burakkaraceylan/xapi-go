@@ -25,6 +25,7 @@
             args: --verbose
     test:
       needs: lint
+      environment: xapi-go
       strategy:
         matrix:
           os: [ubuntu-latest, macos-latest]
