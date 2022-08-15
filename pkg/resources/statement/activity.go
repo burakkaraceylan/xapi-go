@@ -10,10 +10,12 @@ type Activity struct {
 	Definition *ActivityDefinition `json:"definition,omitempty" xApi:"optional"`
 }
 
+// Returns avtivity
 func (a Activity) GetObjectType() string {
 	return "Activity"
 }
 
+// NewActivity creates a new activity instance
 func NewActivity(id string) *Activity {
 	return &Activity{
 		ID:         id,
@@ -21,6 +23,7 @@ func NewActivity(id string) *Activity {
 	}
 }
 
+// NewActivity creates a new activity instance with definition
 func NewActivityWithDefiniton(id string, definition *ActivityDefinition) *Activity {
 	return &Activity{
 		ID:         id,

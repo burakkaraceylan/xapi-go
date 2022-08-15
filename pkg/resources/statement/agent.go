@@ -13,20 +13,24 @@ type Agent struct {
 	Account     *Account `json:"account,omitempty" xapi:"optional"`
 }
 
+// Returns Agent
 func (a Agent) GetObjectType() string {
 	return "Agent"
 }
 
+// Returns Agent
 func (a Agent) GetActorType() string {
 	return "Agent"
 }
 
 // !we ignore possible erros here
+// Helper func to marshal into json
 func (a *Agent) ToJSON() string {
 	b, _ := json.Marshal(a)
 	return string(b)
 }
 
+// Creates a new agent with a mailbox
 func NewAgentWithMbox(name string, mbox string) *Agent {
 	return &Agent{
 		ObjectType: "Agent",
@@ -35,6 +39,7 @@ func NewAgentWithMbox(name string, mbox string) *Agent {
 	}
 }
 
+// Creates a new agent with a mail SHA1
 func NewAgentWithSHA1(name string, sha1 string) *Agent {
 	return &Agent{
 		ObjectType:  "Agent",
@@ -43,6 +48,7 @@ func NewAgentWithSHA1(name string, sha1 string) *Agent {
 	}
 }
 
+// Creates a new agent with an openid
 func NewAgentWithOpenID(name string, openid string) *Agent {
 	return &Agent{
 		ObjectType: "Agent",
@@ -51,6 +57,7 @@ func NewAgentWithOpenID(name string, openid string) *Agent {
 	}
 }
 
+// Creates a new agent with an account
 func NewAgentWithAccount(name string, account *Account) *Agent {
 	return &Agent{
 		ObjectType: "Agent",
@@ -59,6 +66,7 @@ func NewAgentWithAccount(name string, account *Account) *Agent {
 	}
 }
 
+// Creates a new anonymous agent with a mailbox
 func NewAnonymousAgentWithMbox(mbox string) *Agent {
 	return &Agent{
 		ObjectType: "Agent",
@@ -66,6 +74,7 @@ func NewAnonymousAgentWithMbox(mbox string) *Agent {
 	}
 }
 
+// Creates a new anonymous agent with a mail SHA1
 func NewAnonymousAgentWithSHA1(sha1 string) *Agent {
 	return &Agent{
 		ObjectType:  "Agent",
@@ -73,6 +82,7 @@ func NewAnonymousAgentWithSHA1(sha1 string) *Agent {
 	}
 }
 
+// Creates a new anonymous agent with an openid
 func NewAnonymousAgentWithOpenID(openid string) *Agent {
 	return &Agent{
 		ObjectType: "Agent",
@@ -80,6 +90,7 @@ func NewAnonymousAgentWithOpenID(openid string) *Agent {
 	}
 }
 
+// Creates a new anonymous agent with an account
 func NewAnonymousAgentWithAccount(account *Account) *Agent {
 	return &Agent{
 		ObjectType: "Agent",

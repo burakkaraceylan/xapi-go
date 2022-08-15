@@ -188,7 +188,6 @@ func (lrs *RemoteLRS) GetStatement(id string) (*statement.Statement, *Response, 
 	return statement, lrs_resp, nil
 }
 
-// TODO: Return a Statement struct not a Response
 // GetVoidedStatement is used to fetch a single voided statement from record store
 func (lrs *RemoteLRS) GetVoidedStatement(id string) (*statement.Statement, *Response, error) {
 	lrs_request := lrs.newRequest("GET", "statements", nil, &map[string]string{"voidedStatementId": id}, nil)
@@ -620,6 +619,7 @@ func (lrs *RemoteLRS) DeleteState(state *documents.StateDocument) (*Response, er
 	return lrs_resp, nil
 }
 
+// Optional params for GetActivityProfileIds
 type GetActivityProfileIdsOptionalParams struct {
 	Since *time.Time
 }
@@ -814,6 +814,7 @@ func (lrs *RemoteLRS) DeleteActivityProfile(profile *documents.ActivityDocument)
 	return lrs_resp, nil
 }
 
+// Optional params for GetAgentProfileIds
 type GetAgentProfileIdsoptionalParams struct {
 	Agent statement.Agent
 	Since *time.Time

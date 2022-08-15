@@ -5,10 +5,12 @@ import (
 	"errors"
 )
 
+// Actor interface. Impelemented by Agent, Group, StatementRef and SubStatement types.
 type IObject interface {
 	GetObjectType() string
 }
 
+// UnmarshalObject is used to unmarshal an IObject into its type
 func UnmarshalObject(m json.RawMessage, object *IObject) error {
 	var obj struct {
 		ObjectType string `json:"objectType"`

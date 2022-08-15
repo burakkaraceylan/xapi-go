@@ -55,6 +55,7 @@ type StatementResult struct {
 	Statements []Statement `json:"statements"`
 }
 
+// Unmarshals the statement. A custom unmarshaller is required due to Actor, Object and Authority fields being interfaces.
 func (s *Statement) UnmarshalJSON(data []byte) error {
 	raw := struct {
 		Actor       json.RawMessage `json:"actor"`
