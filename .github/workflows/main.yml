@@ -56,6 +56,9 @@
               ${{ runner.os }}-go-
         - name: Run Tests
           run: make test
+          env:
+            XapiSandboxUsername: ${{ secrets.XAPISANDBOXUSERNAME }}
+            XapiSandboxPassword: ${{ secrets.XAPISANDBOXPASSWORD }}            
         - name: Upload coverage to Codecov
           uses: codecov/codecov-action@v3
           with:
